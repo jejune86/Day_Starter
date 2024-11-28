@@ -12,11 +12,11 @@ import java.util.List;
 
 @Dao
 public interface TodoDao {
+    @Query("SELECT * FROM todos WHERE date = :date")
+    List<TodoEntity> getTodosByDate(String date);
+
     @Query("SELECT * FROM todos")
     List<TodoEntity> getAllTodos();
-
-    @Query("SELECT * FROM todos WHERE date >= :startOfDay AND date < :endOfDay")
-    List<TodoEntity> getTodosByDate(long startOfDay, long endOfDay);
 
     @Insert
     long insert(TodoEntity todo);

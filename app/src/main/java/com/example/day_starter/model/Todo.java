@@ -4,9 +4,9 @@ public class Todo {
     private int id;
     private String title;
     private boolean isCompleted;
-    private long date;
+    private String date;
 
-    public Todo(String title, long date) {
+    public Todo(String title, String date) {
         this.title = title;
         this.date = date;
         this.isCompleted = false;
@@ -37,6 +37,11 @@ public class Todo {
         isCompleted = completed;
     }
 
-    public long getDate() { return date; }
-    public void setDate(long date) { this.date = date; }
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
 } 

@@ -5,6 +5,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.ImageButton;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -16,6 +17,8 @@ import com.example.day_starter.model.Todo;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.view.Menu;
+
 public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.TodoViewHolder> {
     private List<Todo> todos = new ArrayList<>();
     private TodoListener listener;
@@ -23,6 +26,8 @@ public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.TodoViewHolder
     public interface TodoListener {
         void onTodoCheckedChanged(Todo todo, boolean isChecked);
         void onTodoDelete(Todo todo);
+        void onTodoEdit(Todo todo);
+        void onTodoMoveToTomorrow(Todo todo);
     }
 
     public void setTodoListener(TodoListener listener) {
@@ -30,7 +35,7 @@ public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.TodoViewHolder
     }
 
     public void setTodos(List<Todo> todos) {
-        this.todos = todos;
+        this.todos = new ArrayList<>(todos);
         notifyDataSetChanged();
     }
 
@@ -39,7 +44,7 @@ public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.TodoViewHolder
     public TodoViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_todo, parent, false);
-        return new TodoViewHolder(view);
+        return new TodoViewHolder(view, listener);
     }
 
     @Override
@@ -54,15 +59,17 @@ public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.TodoViewHolder
     }
 
     class TodoViewHolder extends RecyclerView.ViewHolder {
-        private CheckBox checkBox;
-        private TextView titleText;
-        private ImageButton deleteButton;
+        private final TextView titleText;
+        private final CheckBox checkBox;
+        private final ImageButton moreButton;
+        private final TodoListener listener;
 
-        TodoViewHolder(@NonNull View itemView) {
+        TodoViewHolder(View itemView, TodoListener listener) {
             super(itemView);
-            checkBox = itemView.findViewById(R.id.checkbox_todo);
+            this.listener = listener;
             titleText = itemView.findViewById(R.id.text_todo_title);
-            deleteButton = itemView.findViewById(R.id.button_delete);
+            checkBox = itemView.findViewById(R.id.checkbox_todo);
+            moreButton = itemView.findViewById(R.id.button_more);
         }
 
         void bind(Todo todo) {
@@ -75,10 +82,34 @@ public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.TodoViewHolder
                 }
             });
 
-            deleteButton.setOnClickListener(v -> {
-                if (listener != null) {
-                    listener.onTodoDelete(todo);
-                }
+            moreButton.setOnClickListener(v -> {
+                PopupMenu popup = new PopupMenu(v.getContext(), moreButton);
+                popup.getMenu().add(Menu.NONE, 1, 1, "수정하기");
+                popup.getMenu().add(Menu.NONE, 2, 2, "내일하기");
+                popup.getMenu().add(Menu.NONE, 3, 3, "삭제");
+                
+                popup.setOnMenuItemClickListener(item -> {
+                    switch (item.getItemId()) {
+                        case 1: // 수정하기
+                            if (listener != null) {
+                                listener.onTodoEdit(todo);
+                            }
+                            return true;
+                        case 2: // 내일하기
+                            if (listener != null) {
+                                listener.onTodoMoveToTomorrow(todo);
+                            }
+                            return true;
+                        case 3: // 삭제
+                            if (listener != null) {
+                                listener.onTodoDelete(todo);
+                            }
+                            return true;
+                    }
+                    return false;
+                });
+                
+                popup.show();
             });
         }
     }

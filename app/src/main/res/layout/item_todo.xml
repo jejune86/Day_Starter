@@ -30,12 +30,12 @@
             android:textSize="16sp"/>
 
         <ImageButton
-            android:id="@+id/button_delete"
+            android:id="@+id/button_more"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_delete"
-            android:contentDescription="삭제"/>
+            android:src="@drawable/ic_more_vert"
+            android:contentDescription="더보기"/>
 
     </LinearLayout>
 

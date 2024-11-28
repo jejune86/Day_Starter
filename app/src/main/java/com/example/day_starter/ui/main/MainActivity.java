@@ -5,7 +5,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.PopupMenu;
 import android.widget.Toast;
+import android.widget.ImageButton;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -39,15 +41,22 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
     private TodoRepository todoRepository;
     private TodoAdapter todoAdapter;
     private MaterialCalendarView calendarDialog;
-    private long currentDate;
+    private LocalDate currentDate;
 
+    /**
+     * 앱이 시작될 때 초기 설정을 수행합니다.
+     * - TodoRepository 초기화
+     * - 현재 날짜 설정
+     * - UI 컴포넌트 초기화
+     * - RecyclerView 및 어댑터 설정
+     */
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         todoRepository = TodoRepository.getInstance(this);
-        currentDate = getTodayMillis(); // 오늘 날짜로 초기화
+        currentDate = LocalDate.now();
 
         // 상단 툴바에 달력 버튼 추가
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -66,6 +75,11 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         setupCalendarDialog();
     }
 
+    /**
+     * 달력 다이얼로그의 기본 설정을 수행합니다.
+     * - 날짜 선택 리스너 설정
+     * - Todo가 있는 날짜에 점 표시
+     */
     private void setupCalendarDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_calendar, null);
@@ -74,7 +88,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         calendarDialog.setOnDateChangedListener((widget, date, selected) -> {
             Calendar calendar = Calendar.getInstance();
             calendar.set(date.getYear(), date.getMonth() - 1, date.getDay());
-            currentDate = calendar.getTimeInMillis();
+            currentDate = LocalDate.of(date.getYear(), date.getMonth(), date.getDay());
             loadTodosByDate(currentDate);
             builder.create().dismiss();
         });
@@ -85,20 +99,31 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         todoRepository.getAllTodos(todos -> {
             Set<CalendarDay> dates = new HashSet<>();
             for (Todo todo : todos) {
-                Instant instant = Instant.ofEpochMilli(todo.getDate());
-                LocalDate localDate = instant.atZone(ZoneId.systemDefault()).toLocalDate();
-                dates.add(CalendarDay.from(localDate));
+                try {
+                    LocalDate localDate = LocalDate.parse(todo.getDate());  // YYYY-MM-DD 형식의 문자열을 파싱
+                    dates.add(CalendarDay.from(localDate.getYear(), 
+                                             localDate.getMonthValue(), 
+                                             localDate.getDayOfMonth()));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
             runOnUiThread(() -> calendarDialog.addDecorator(new EventDecorator(dates)));
         });
     }
 
+    /**
+     * 상단 툴바의 메뉴를 생성합니다.
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_menu, menu);
         return true;
     }
 
+    /**
+     * 툴바 메뉴 아이템 선택 처리를 수행합니다.
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_calendar) {
@@ -108,40 +133,28 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         return super.onOptionsItemSelected(item);
     }
 
-    private void loadTodosByDate(long date) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(date);
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        long startOfDay = calendar.getTimeInMillis();
-        
-        calendar.add(Calendar.DAY_OF_MONTH, 1);
-        long endOfDay = calendar.getTimeInMillis();
-
-        todoRepository.getTodosByDate(startOfDay, endOfDay, todos -> 
+    /**
+     * 특정 날짜의 할 일 목록을 로드하여 화면에 표시합니다.
+     * @param date 표시할 날짜
+     */
+    private void loadTodosByDate(LocalDate date) {
+        String dateStr = date.toString(); // YYYY-MM-DD 형식
+        todoRepository.getTodosByDate(dateStr, todos -> 
             runOnUiThread(() -> todoAdapter.setTodos(todos))
         );
     }
 
-    private long getTodayMillis() {
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-        return calendar.getTimeInMillis();
-    }
-
+    /**
+     * 새로운 할 일을 추가하는 다이얼로그를 표시합니다.
+     * - 제목 입력
+     * - 날짜 선택 가능
+     */
     private void showAddTodoDialog() {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_todo_with_date, null);
         EditText editText = dialogView.findViewById(R.id.todo_title_input);
         MaterialCalendarView calendarView = dialogView.findViewById(R.id.calendarView);
         
-        // 현재 날짜 선택
-        Instant instant = Instant.ofEpochMilli(currentDate);
-        LocalDate currentLocalDate = instant.atZone(ZoneId.systemDefault()).toLocalDate();
-        calendarView.setSelectedDate(CalendarDay.from(currentLocalDate));
+        calendarView.setSelectedDate(CalendarDay.from(currentDate));
 
         new AlertDialog.Builder(this)
                 .setTitle("새 할 일 추가")
@@ -150,10 +163,12 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
                     String title = editText.getText().toString().trim();
                     if (!title.isEmpty()) {
                         CalendarDay selectedDate = calendarView.getSelectedDate();
-                        Calendar calendar = Calendar.getInstance();
-                        calendar.set(selectedDate.getYear(), selectedDate.getMonth() - 1, selectedDate.getDay());
+                        LocalDate localDate = LocalDate.of(selectedDate.getYear(), 
+                                                        selectedDate.getMonth(), 
+                                                        selectedDate.getDay());
+                        String todoDate = localDate.toString();  // YYYY-MM-DD 형식으로 변환
                         
-                        Todo newTodo = new Todo(title, calendar.getTimeInMillis());
+                        Todo newTodo = new Todo(title, todoDate);
                         todoRepository.insertTodo(newTodo, todos -> 
                             runOnUiThread(() -> loadTodosByDate(currentDate))
                         );
@@ -165,6 +180,9 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
                 .show();
     }
 
+    /**
+     * 할 일의 완료 상태가 변경되었을 때 처리합니다.
+     */
     @Override
     public void onTodoCheckedChanged(Todo todo, boolean isChecked) {
         todo.setCompleted(isChecked);
@@ -173,6 +191,9 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         );
     }
 
+    /**
+     * 할 일을 삭제합니다.
+     */
     @Override
     public void onTodoDelete(Todo todo) {
         todoRepository.deleteTodo(todo, todos -> 
@@ -180,15 +201,63 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         );
     }
 
+    /**
+     * 할 일을 정하는 다이얼로그를 표시합니다.
+     */
+    @Override
+    public void onTodoEdit(Todo todo) {
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_todo, null);
+        EditText editText = dialogView.findViewById(R.id.todo_title_input);
+        editText.setText(todo.getTitle());
+
+        new AlertDialog.Builder(this)
+                .setTitle("할 일 수정")
+                .setView(dialogView)
+                .setPositiveButton("수정", (dialog, which) -> {
+                    String title = editText.getText().toString().trim();
+                    if (!title.isEmpty()) {
+                        todo.setTitle(title);
+                        todoRepository.updateTodo(todo, todos -> 
+                            runOnUiThread(() -> loadTodosByDate(currentDate))
+                        );
+                    }
+                })
+                .setNegativeButton("취소", null)
+                .show();
+    }
+
+    /**
+     * 선택된 할 일을 다음 날로 이동합니다.
+     */
+    @Override
+    public void onTodoMoveToTomorrow(Todo todo) {
+        LocalDate date = LocalDate.parse(todo.getDate());  // String을 LocalDate로 변환
+        LocalDate tomorrow = date.plusDays(1);      // 1일 추가
+        String tomorrowStr = tomorrow.toString();    // YYYY-MM-DD 형식으로 변환
+        todo.setDate(tomorrowStr);
+        
+        todoRepository.updateTodo(todo, todos -> 
+            runOnUiThread(() -> {
+                loadTodosByDate(currentDate);
+                Toast.makeText(this, "내일로 이동되었습니다.", Toast.LENGTH_SHORT).show();
+            })
+        );
+    }
+
+    /**
+     * 달력 다이얼로그를 표시합니다.
+     * - 현재 선택된 날짜 표시
+     * - 할 일이 있는 날짜에 점 표시
+     */
     private void showCalendarDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_calendar, null);
         MaterialCalendarView calendarView = dialogView.findViewById(R.id.calendarView);
         
         // 현재 선택된 날짜 설정
-        Instant instant = Instant.ofEpochMilli(currentDate);
-        LocalDate currentLocalDate = instant.atZone(ZoneId.systemDefault()).toLocalDate();
-        calendarView.setSelectedDate(CalendarDay.from(currentLocalDate));
+        calendarView.setSelectedDate(CalendarDay.from(currentDate.getYear(), 
+                                                    currentDate.getMonthValue(), 
+                                                    currentDate.getDayOfMonth()));
         
         builder.setView(dialogView);
         builder.setTitle("날짜 선택");
@@ -197,24 +266,31 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         
         // 날짜 선택 리스너 설정
         calendarView.setOnDateChangedListener((widget, date, selected) -> {
-            Calendar selectedCalendar = Calendar.getInstance();
-            selectedCalendar.set(date.getYear(), date.getMonth() - 1, date.getDay());
-            currentDate = selectedCalendar.getTimeInMillis();
+            currentDate = LocalDate.of(date.getYear(), date.getMonth(), date.getDay());
             loadTodosByDate(currentDate);
-            dialog.dismiss();
+            dialog.dismiss();  // 현재 다이얼로그를 닫음
         });
 
         // Todo가 있는 날짜에 점 표시
         todoRepository.getAllTodos(todos -> {
             Set<CalendarDay> dates = new HashSet<>();
             for (Todo todo : todos) {
-                Instant todoInstant = Instant.ofEpochMilli(todo.getDate());
-                LocalDate localDate = todoInstant.atZone(ZoneId.systemDefault()).toLocalDate();
-                dates.add(CalendarDay.from(localDate));
+                try {
+                    String[] dateParts = todo.getDate().split("-");
+                    if (dateParts.length == 3) {
+                        int year = Integer.parseInt(dateParts[0]);
+                        int month = Integer.parseInt(dateParts[1]);
+                        int day = Integer.parseInt(dateParts[2]);
+                        dates.add(CalendarDay.from(year, month, day));
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-            runOnUiThread(() -> calendarView.addDecorator(new EventDecorator(dates)));
+            runOnUiThread(() -> {
+                calendarView.addDecorator(new EventDecorator(dates));
+                dialog.show();
+            });
         });
-
-        dialog.show();
     }
 } 

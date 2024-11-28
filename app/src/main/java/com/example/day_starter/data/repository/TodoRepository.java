@@ -33,7 +33,7 @@ public class TodoRepository {
         executorService.execute(() -> {
             long id = todoDao.insert(entity);
             entity.setId((int)id);
-            List<TodoEntity> entities = todoDao.getAllTodos();
+            List<TodoEntity> entities = todoDao.getTodosByDate(todo.getDate());
             List<Todo> todos = entities.stream()
                 .map(e -> {
                     Todo t = new Todo(e.getTitle(), e.getDate());
@@ -52,7 +52,7 @@ public class TodoRepository {
         entity.setCompleted(todo.isCompleted());
         executorService.execute(() -> {
             todoDao.update(entity);
-            List<TodoEntity> entities = todoDao.getAllTodos();
+            List<TodoEntity> entities = todoDao.getTodosByDate(todo.getDate());
             List<Todo> todos = entities.stream()
                 .map(e -> {
                     Todo t = new Todo(e.getTitle(), e.getDate());
@@ -70,7 +70,7 @@ public class TodoRepository {
         entity.setId(todo.getId());
         executorService.execute(() -> {
             todoDao.delete(entity);
-            List<TodoEntity> entities = todoDao.getAllTodos();
+            List<TodoEntity> entities = todoDao.getTodosByDate(todo.getDate());
             List<Todo> todos = entities.stream()
                 .map(e -> {
                     Todo t = new Todo(e.getTitle(), e.getDate());
@@ -102,9 +102,9 @@ public class TodoRepository {
         });
     }
 
-    public void getTodosByDate(long startOfDay, long endOfDay, TodoCallback callback) {
+    public void getTodosByDate(String date, TodoCallback callback) {
         executorService.execute(() -> {
-            List<TodoEntity> entities = todoDao.getTodosByDate(startOfDay, endOfDay);
+            List<TodoEntity> entities = todoDao.getTodosByDate(date);
             List<Todo> todos = entities.stream()
                 .map(entity -> {
                     Todo todo = new Todo(entity.getTitle(), entity.getDate());
