@@ -1,4 +1,4 @@
-package com.example.day_starter.model;
+package com.example.day_starter.model.todo;
 
 public class Todo {
     private int id;

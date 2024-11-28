@@ -1,4 +1,4 @@
-package com.example.day_starter.data.repository;
+package com.example.day_starter.data.repository.todo;
 
 import android.content.Context;
 import java.util.List;

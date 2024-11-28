@@ -1,39 +1,42 @@
 package com.example.day_starter.ui.main;
 
+import android.content.pm.PackageManager;
+import android.graphics.drawable.GradientDrawable;
+import android.location.Location;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.PopupMenu;
+import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ImageButton;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.day_starter.Manifest;
 import com.example.day_starter.R;
-import com.example.day_starter.data.repository.TodoRepository;
-import com.example.day_starter.model.Todo;
+import com.example.day_starter.data.repository.todo.TodoRepository;
+import com.example.day_starter.data.repository.weather.WeatherRepository;
+import com.example.day_starter.model.todo.Todo;
+import com.example.day_starter.model.weather.Weather;
 import com.example.day_starter.ui.adapter.TodoAdapter;
 import com.example.day_starter.ui.decorator.EventDecorator;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.prolificinteractive.materialcalendarview.CalendarDay;
-import com.prolificinteractive.materialcalendarview.DayViewDecorator;
-import com.prolificinteractive.materialcalendarview.DayViewFacade;
 import com.prolificinteractive.materialcalendarview.MaterialCalendarView;
-import com.prolificinteractive.materialcalendarview.spans.DotSpan;
 
 import org.threeten.bp.LocalDate;
-import org.threeten.bp.ZoneId;
-import org.threeten.bp.Instant;
+
 import java.util.Calendar;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoListener {
@@ -42,6 +45,14 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
     private TodoAdapter todoAdapter;
     private MaterialCalendarView calendarDialog;
     private LocalDate currentDate;
+//    private FusedLocationProviderClient fusedLocationClient;
+//    private WeatherRepository weatherRepository;
+//    private TextView tvTemperature, tvSky, tvPrecipitationType, tvPrecipitation;
+//    // 콜백 인터페이스 추가
+//    interface LocationCallback {
+//        void onLocationReceived(Location location);
+//    }
+
 
     /**
      * 앱이 시작될 때 초기 설정을 수행합니다.
@@ -50,30 +61,100 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
      * - UI 컴포넌트 초기화
      * - RecyclerView 및 어댑터 설정
      */
-    @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
-        todoRepository = TodoRepository.getInstance(this);
-        currentDate = LocalDate.now();
-
-        // 상단 툴바에 달력 버튼 추가
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        RecyclerView recyclerView = findViewById(R.id.recycler_todos);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        todoAdapter = new TodoAdapter();
-        todoAdapter.setTodoListener(this);
-        recyclerView.setAdapter(todoAdapter);
-
-        FloatingActionButton fabAddTodo = findViewById(R.id.fab_add_todo);
-        fabAddTodo.setOnClickListener(v -> showAddTodoDialog());
-
-        loadTodosByDate(currentDate);
-        setupCalendarDialog();
-    }
+//    @Override
+//    protected void onStart() {
+//        super.onStart();
+//        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+//
+//    }
+//
+//    private void initializeLocationClient() {
+//        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+//    }
+//
+//    private void checkLocationPermission() {
+//        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+//                != PackageManager.PERMISSION_GRANTED) {
+//            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+//        } else {
+//            getLastKnownLocation(this::fetchWeatherData);
+//        }
+//    }
+//
+//    private void getLastKnownLocation(LocationCallback callback) {
+//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//            return;
+//        }
+//        fusedLocationClient.getLastLocation()
+//                .addOnCompleteListener(this, task -> {
+//                    if (task.isSuccessful() && task.getResult() != null) {
+//                        callback.onLocationReceived(task.getResult());
+//                    }
+//                });
+//    }
+//
+//    private void fetchWeatherData(Location location) {
+//        if (location != null) {
+//            weatherRepository = new WeatherRepository();
+//            weatherRepository.getWeatherData(location.getLatitude(), location.getLongitude(), new WeatherDataCallback());
+//        }
+//    }
+//
+//    private class WeatherDataCallback implements WeatherRepository.WeatherCallback {
+//        @Override
+//        public void onWeatherDataReceived() {
+//            runOnUiThread(() -> updateWeatherUI());
+//        }
+//    }
+//
+//    private void initializeWeatherData() {
+//        Weather weather = Weather.getInstance();
+//        tvTemperature.setText("온도: 로딩 중...");
+//        tvSky.setText("하늘 상태: 로딩 중...");
+//        tvPrecipitationType.setText("강수 형태: 로딩 중...");
+//        tvPrecipitation.setText("강수량: 로딩 중...");
+//    }
+//
+//    private void updateWeatherUI() {
+//        Weather weather = Weather.getInstance();
+//        tvTemperature.setText("온도: " + weather.getTemperature() + "°C");
+//        tvSky.setText("하늘 상태: " + weather.getSky());
+//        tvPrecipitationType.setText("강수 형태: " + weather.getPrecipitationType());
+//        tvPrecipitation.setText("강수량: " + weather.getPrecipitation());
+//        Log.d("MainActivity", "온도: " + weather.getTemperature() + "°C");
+//        Log.d("MainActivity", "하늘 상태: " + weather.getSky());
+//        Log.d("MainActivity", "강수 형태: " + weather.getPrecipitationType());
+//        Log.d("MainActivity", "강수량: " + weather.getPrecipitation());
+//
+//        GradientDrawable gradientDrawable = backgroundColorManager.getBackgroundDrawable();
+//        mainLayout.setBackground(gradientDrawable);
+//    }
+//
+//    @Override
+//    protected void onCreate(@Nullable Bundle savedInstanceState) {
+//        super.onCreate(savedInstanceState);
+//        setContentView(R.layout.activity_main);
+//
+//        todoRepository = TodoRepository.getInstance(this);
+//        currentDate = LocalDate.now();
+//
+//        // 상단 툴바에 달력 버튼 추가
+//        Toolbar toolbar = findViewById(R.id.toolbar);
+//        setSupportActionBar(toolbar);
+//
+//        RecyclerView recyclerView = findViewById(R.id.recycler_todos);
+//        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+//        todoAdapter = new TodoAdapter();
+//        todoAdapter.setTodoListener(this);
+//        recyclerView.setAdapter(todoAdapter);
+//
+//        FloatingActionButton fabAddTodo = findViewById(R.id.fab_add_todo);
+//        fabAddTodo.setOnClickListener(v -> showAddTodoDialog());
+//
+//        loadTodosByDate(currentDate);
+//        setupCalendarDialog();
+//    }
 
     /**
      * 달력 다이얼로그의 기본 설정을 수행합니다.

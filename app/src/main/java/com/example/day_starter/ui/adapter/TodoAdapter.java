@@ -12,7 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.day_starter.R;
-import com.example.day_starter.model.Todo;
+import com.example.day_starter.model.todo.Todo;
 
 import java.util.ArrayList;
 import java.util.List;

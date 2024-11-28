@@ -1,3 +1,5 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+
 plugins {
     alias(libs.plugins.android.application)
 }
@@ -5,6 +7,11 @@ plugins {
 android {
     namespace = "com.example.day_starter"
     compileSdk = 34
+
+    buildFeatures {
+        buildConfig = true
+        viewBinding = true
+    }
 
     defaultConfig {
         applicationId = "com.example.day_starter"
@@ -14,6 +21,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "WEATHER_API_KEY", "\"${gradleLocalProperties(rootDir, providers).getProperty("WEATHER_API_KEY")}\"")
     }
 
     buildTypes {
@@ -32,6 +41,10 @@ android {
 }
 
 dependencies {
+    // Retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    // GSON Converter
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 
     implementation(libs.appcompat)
     implementation(libs.material)
