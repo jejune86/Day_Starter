@@ -28,7 +28,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:maxLines="2"
-            android:ellipsize="end"/>
+            android:ellipsize="end"
+            android:textStyle="bold"/>
 
     </LinearLayout>
 

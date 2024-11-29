@@ -15,14 +15,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:hint="할 일을 입력하세요">
+        android:hint="할 일을 입력하세요"
+        android:textStyle="bold">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/todo_title_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="text"
-            android:maxLines="1"/>
+            android:maxLines="1"
+            android:textStyle="bold"/>
 
     </com.google.android.material.textfield.TextInputLayout>
 </LinearLayout> 

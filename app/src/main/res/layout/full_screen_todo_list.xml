@@ -5,10 +5,12 @@
     android:orientation="vertical">
 
     <RelativeLayout
+        android:id="@+id/calender_toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp"
         android:background="?attr/colorPrimary">
+
 
         <TextView
             android:id="@+id/tv_selected_date"
@@ -16,7 +18,8 @@
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             android:textColor="#FFFFFF"
-            android:textSize="18sp"/>
+            android:textSize="18sp"
+            android:textStyle="bold"/>
 
         <ImageButton
             android:id="@+id/btn_close"

@@ -2,13 +2,17 @@ package com.example.day_starter.ui.main;
 
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -42,7 +46,6 @@ import com.prolificinteractive.materialcalendarview.MaterialCalendarView;
 import org.threeten.bp.LocalDate;
 import org.threeten.bp.format.DateTimeFormatter;
 
-import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -56,6 +59,8 @@ import java.io.IOException;
 import android.util.Log;
 
 import android.view.ViewGroup;
+
+import com.example.day_starter.util.ColorManager;
 
 
 
@@ -77,12 +82,14 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
     private MaterialCalendarView calendarView;
     private RecyclerView fullScreenTodoRecyclerView;
     private TextView fullScreenDateTextView;
+    private ColorManager colorManager;
+    private Toolbar toolbar;
+
 
     // 콜백 인터페이스 추가
     interface LocationCallback {
         void onLocationReceived(Location location);
     }
-
 
     /**
      * 앱이 시작될 때 초기 설정을 수행합니다.
@@ -97,6 +104,10 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        checkLocationPermission();
+        
+        toolbar = findViewById(R.id.toolbar);
         initializeWeatherViews();
         initializeLocationClient();
         initializeWeatherData();
@@ -105,8 +116,9 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         todoRepository = TodoRepository.getInstance(this);
         currentDate = LocalDate.now();
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
+        
         setSupportActionBar(toolbar);
+        initializeLocationClient();
 
         RecyclerView recyclerView = findViewById(R.id.recycler_todos);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -196,7 +208,15 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
             weatherRepository.getWeatherData(
                 location.getLatitude(), 
                 location.getLongitude(), 
-                new WeatherDataCallback()
+                new WeatherDataCallback() {
+                    @Override
+                    public void onWeatherDataReceived() {
+                        runOnUiThread(() -> {
+                            colorManager = new ColorManager(MainActivity.this);
+                            updateWeatherUI();
+                        });
+                    }
+                }
             );
         }
     }
@@ -218,25 +238,21 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
     
     private void updateWeatherUI() {
         Weather weather = Weather.getInstance();
+        
+        // 날씨 UI 업데이트
         tvTemperature.setText(String.format("현재 온도: %.1f°C", weather.getTemperature()));
         tvTempRange.setText(String.format("최저/최고: %.1f°C/%.1f°C", 
             weather.getMinTemperature(), 
             weather.getMaxTemperature()));
         
         String skyStatus;
-        switch (weather.getSky()) {
-            case 1:
-                skyStatus = "맑음";
-                break;
-
-            case 3:
-                skyStatus = "구름 많음";
-                break;
-            case 4:
-                skyStatus = "흐림";
-                break;
-            default:
-                skyStatus = "알 수 없음";
+        int sky = weather.getSky();
+        if (sky <= 5) {
+            skyStatus = "맑음";
+        } else if (sky <= 8) {
+            skyStatus = "구름 많음";
+        } else {
+            skyStatus = "흐림";
         }
         tvSky.setText("하늘 상태: " + skyStatus);
         
@@ -254,6 +270,9 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
             case 3:
                 precipitationType = "눈";
                 break;
+            case 4 :
+                precipitationType = "소나기";
+                break;
             default:
                 precipitationType = "알 수 없음";
         }
@@ -264,18 +283,14 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
 
         // 강수 형태가 없을 때는 하늘 상태에 따라 아이콘 설정
         if (weather.getPrecipitationType() == 0) {
-            switch (weather.getSky()) {
-                case 1:
-                    weatherIcon.setImageResource(R.drawable.ic_weather_sunny);
-                    break;
-                case 3:
-                    weatherIcon.setImageResource(R.drawable.ic_weather_cloudy);
-                    break;
-                case 4:
-                    weatherIcon.setImageResource(R.drawable.ic_weather_overcast);
-                    break;
-                default:
-                    weatherIcon.setImageResource(R.drawable.ic_weather_sunny);
+            if (weather.getSky() <= 5) {
+                weatherIcon.setImageResource(R.drawable.ic_weather_sunny);
+            } else if (weather.getSky() <= 8) {
+                weatherIcon.setImageResource(R.drawable.ic_weather_cloudy); 
+            } else if (weather.getSky() <= 10) {
+                weatherIcon.setImageResource(R.drawable.ic_weather_overcast);
+            } else {
+                weatherIcon.setImageResource(R.drawable.ic_weather_sunny);
             }
         } else {
             // 강수 형태가 있을 때
@@ -289,16 +304,43 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
                 case 3:
                     weatherIcon.setImageResource(R.drawable.ic_weather_snow);
                     break;
+                case 4:
+                    weatherIcon.setImageResource(R.drawable.ic_weather_rain);
+                    break;
                 default:
                     weatherIcon.setImageResource(R.drawable.ic_weather_sunny);
             }
         }
+        
+        // 배경색 설정
+        View mainContent = findViewById(R.id.main_content);
+        mainContent.setBackground(colorManager.getBackgroundDrawable());
+        
+        // 텍스트 색 설정
+        int textColor = colorManager.getTextColor();
+        tvTemperature.setTextColor(textColor);
+        tvTempRange.setTextColor(textColor);
+        tvSky.setTextColor(textColor);
+        tvPrecipitationType.setTextColor(textColor);
+        tvPrecipitation.setTextColor(textColor);
+        
+
+        toolbar.setBackgroundColor(colorManager.getToolbarColor());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            Window window = getWindow();
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            window.setStatusBarColor(colorManager.getToolbarColor());
+        }
+
+        // 로딩 화면 숨기고 메인 컨텐츠 표시
+        findViewById(R.id.loading_layout).setVisibility(View.GONE);
+        mainContent.setVisibility(View.VISIBLE);
     }
 
 
 
     /**
-     * 달력 다이얼로그의 기본 설정을 수행합니다.
+     * 달력 다이얼로그의 기본 설정
      * - 날짜 선택 리스너 설정
      * - Todo가 있는 날에 점 표시
      */
@@ -459,7 +501,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
      */
     @Override
     public void onTodoMoveToTomorrow(Todo todo) {
-        LocalDate date = LocalDate.parse(todo.getDate());  // String을 LocalDate로 변환
+        LocalDate date = LocalDate.parse(todo.getDate());  // String을 LocalDate로 환산 
         LocalDate tomorrow = date.plusDays(1);      // 1일 추가
         String tomorrowStr = tomorrow.toString();    // YYYY-MM-DD 형식으로 변환
         todo.setDate(tomorrowStr);
@@ -496,7 +538,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
     }
 
     private void loadNewsHeadlines() {
-        Log.d("NewsAPI", "뉴스 데이터 로딩 시작");
+        Log.d("NewsAPI", "뉴스 데이 로딩 시작");
         NewsAPIClient newsAPIClient = new NewsAPIClient();
         newsAPIClient.getNewsAPIService().getTopHeadlines("us", BuildConfig.NEWS_API_KEY)
             .enqueue(new Callback<NewsResponse>() {
@@ -586,7 +628,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         fullScreenAdapter.setTodoListener(this);
         fullScreenTodoRecyclerView.setAdapter(fullScreenAdapter);
         
-        // 달력 이벤트 설정
+        // 달 이벤트 설정
         calendarView.setOnDateChangedListener((widget, date, selected) -> {
             LocalDate selectedDate = LocalDate.of(date.getYear(), date.getMonth(), date.getDay());
             fullScreenDateTextView.setText(selectedDate.format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")));
