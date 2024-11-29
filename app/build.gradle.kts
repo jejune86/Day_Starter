@@ -23,6 +23,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "WEATHER_API_KEY", "\"${gradleLocalProperties(rootDir, providers).getProperty("WEATHER_API_KEY")}\"")
+        buildConfigField("String", "NEWS_API_KEY", "\"${gradleLocalProperties(rootDir, providers).getProperty("NEWS_API_KEY")}\"")
     }
 
     buildTypes {

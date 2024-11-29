@@ -68,6 +68,8 @@ public class WeatherRepository {
         Log.d(TAG, "baseDate = " + baseDate + "  baseTime = " + baseTime);
         Log.d(TAG, "X = " + grid.x + "  Y = " + grid.y);
         String serviceKey = BuildConfig.WEATHER_API_KEY;
+        
+        Log.d(TAG, "Weather API call started");
         weatherAPIService.getWeather(
             serviceKey,
             "400",
@@ -81,6 +83,7 @@ public class WeatherRepository {
             @Override
             public void onResponse(Call<WeatherResponse> call, Response<WeatherResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
+                    Log.d(TAG, "Weather data received");
                     processWeatherResponse(response.body());
                     if (callback != null) {
                         callback.onWeatherDataReceived();
@@ -116,7 +119,6 @@ public class WeatherRepository {
                     String pcp = "0mm";
 
                     for (WeatherResponse.Response.Body.Items.Item item : items) {
-                        Log.d(TAG, "fcstTime : "+ item.getFcstTime());
                         if (item.getFcstTime().equals(currentHour)) {
                             switch (item.getCategory()) {
                                 case "SKY":
