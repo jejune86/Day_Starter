@@ -59,4 +59,6 @@ dependencies {
 
     implementation("com.github.prolificinteractive:material-calendarview:2.0.1")
     implementation("com.jakewharton.threetenabp:threetenabp:1.4.6")
+
+    implementation("com.google.android.gms:play-services-location:21.2.0")
 }

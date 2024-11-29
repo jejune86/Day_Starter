@@ -36,14 +36,14 @@ public class WeatherRepository {
         // Calculate the current date and the closest base time
         Calendar calendar = Calendar.getInstance();
         int hour = calendar.get(Calendar.HOUR_OF_DAY);
-        Log.d(TAG, "hour = "+hour);
+        Log.d(TAG, "adjusted hour = "+hour);
         List<String> baseHours = List.of("02", "05", "08", "11", "14", "17", "20", "23");
 
         // Find the nearest previous base hour
         String baseHour = "-1";
         for (String bh : baseHours) {
             int bhInt = Integer.parseInt(bh);
-            if (bhInt <= hour) {
+            if (bhInt < hour) {
                 baseHour = bh;
             } else {
                 break;
@@ -70,7 +70,7 @@ public class WeatherRepository {
         String serviceKey = BuildConfig.WEATHER_API_KEY;
         weatherAPIService.getWeather(
             serviceKey,
-            "50",
+            "400",
             "1",
             "JSON",
             baseDate,
@@ -105,27 +105,31 @@ public class WeatherRepository {
                     List<WeatherResponse.Response.Body.Items.Item> items = body.getItems().getItem();
                     
                     Calendar now = Calendar.getInstance();
+                    String today = String.format("%tY%<tm%<td", now);
                     String currentHour = String.format("%02d00", now.get(Calendar.HOUR_OF_DAY));
                     
                     double temp = 0;
                     int sky = 0;
                     int pty = 0;
+                    double minTemp = 50;
+                    double maxTemp = -50;
                     String pcp = "0mm";
 
                     for (WeatherResponse.Response.Body.Items.Item item : items) {
+                        Log.d(TAG, "fcstTime : "+ item.getFcstTime());
                         if (item.getFcstTime().equals(currentHour)) {
                             switch (item.getCategory()) {
                                 case "SKY":
                                     Log.d(TAG, "SKY value: " + item.getFcstValue());
-                                    sky = Integer.parseInt(item.getFcstValue());
+                                    sky = item.getFcstValueAsInt();
                                     break;
                                 case "TMP":
                                     Log.d(TAG, "TMP value: " + item.getFcstValue());
-                                    temp = Double.parseDouble(item.getFcstValue());
+                                    temp = item.getFcstValueAsDouble();
                                     break;
                                 case "PTY":
                                     Log.d(TAG, "PTY value: " + item.getFcstValue());
-                                    pty = Integer.parseInt(item.getFcstValue());
+                                    pty = item.getFcstValueAsInt();
                                     break;
                                 case "PCP":
                                     String value = item.getFcstValue();
@@ -134,14 +138,35 @@ public class WeatherRepository {
                                     break;
                             }
                         }
+                        if (item.getFcstDate().equals(today) && item.getCategory().equals("TMP")) {
+                            int fcstTime = Integer.parseInt(item.getFcstTime());
+                            Log.d(TAG, fcstTime+": "+item.getFcstValue());
+                            int currentTime = Integer.parseInt(currentHour);
+                            
+                            // 현재 시간 이후의 예보만 처리
+                            if (fcstTime >= currentTime) {
+                                if (minTemp > item.getFcstValueAsDouble()) {
+                                    Log.d(TAG, "Min TMP value = " + item.getFcstValue() + " at " + item.getFcstTime());
+                                    minTemp = item.getFcstValueAsDouble();
+                                }
+                                if (maxTemp < item.getFcstValueAsDouble()) {
+                                    Log.d(TAG, "Max TMP value = " + item.getFcstValue() + " at " + item.getFcstTime());
+                                    maxTemp = item.getFcstValueAsDouble();
+                                }
+                            }
+                        }
+
+                        if (Integer.parseInt(item.getFcstDate()) > Integer.parseInt(today)) {
+                            break;
+                        }
                     }
                     
                     // Weather 인스턴스 초기화
-                    Weather.setInstance(temp, sky, pty, pcp);
+                    Weather.setInstance(temp, minTemp, maxTemp, sky, pty, pcp);
                 }
             } else {
                 Log.e(TAG, "API Error: " + response.getResponse().getHeader().getResultMsg());
-                Weather.setInstance(0, 0, 0, "0");
+                Weather.setInstance(0, 0, 0, 0, 0, "0");
             }
         }
     }

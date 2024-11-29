@@ -1,9 +1,11 @@
-package com.example.musicrecommendation.utils;
+package com.example.day_starter.util;
 
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
-import com.example.musicrecommendation.data.model.weather.Weather;
+
+import com.example.day_starter.model.weather.Weather;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;

@@ -1,10 +1,8 @@
 package com.example.day_starter.ui.main;
 
 import android.content.pm.PackageManager;
-import android.graphics.drawable.GradientDrawable;
 import android.location.Location;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -21,7 +19,6 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.day_starter.Manifest;
 import com.example.day_starter.R;
 import com.example.day_starter.data.repository.todo.TodoRepository;
 import com.example.day_starter.data.repository.weather.WeatherRepository;
@@ -29,6 +26,8 @@ import com.example.day_starter.model.todo.Todo;
 import com.example.day_starter.model.weather.Weather;
 import com.example.day_starter.ui.adapter.TodoAdapter;
 import com.example.day_starter.ui.decorator.EventDecorator;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.prolificinteractive.materialcalendarview.CalendarDay;
 import com.prolificinteractive.materialcalendarview.MaterialCalendarView;
@@ -39,19 +38,21 @@ import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
 
+import android.Manifest;
+
 public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoListener {
 
     private TodoRepository todoRepository;
     private TodoAdapter todoAdapter;
     private MaterialCalendarView calendarDialog;
     private LocalDate currentDate;
-//    private FusedLocationProviderClient fusedLocationClient;
-//    private WeatherRepository weatherRepository;
-//    private TextView tvTemperature, tvSky, tvPrecipitationType, tvPrecipitation;
-//    // 콜백 인터페이스 추가
-//    interface LocationCallback {
-//        void onLocationReceived(Location location);
-//    }
+    private FusedLocationProviderClient fusedLocationClient;
+    private WeatherRepository weatherRepository;
+    private TextView tvTemperature, tvSky, tvPrecipitationType, tvPrecipitation, tvTempRange;
+    // 콜백 인터페이스 추가
+    interface LocationCallback {
+        void onLocationReceived(Location location);
+    }
 
 
     /**
@@ -62,104 +63,173 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
      * - RecyclerView 및 어댑터 설정
      */
 
-//    @Override
-//    protected void onStart() {
-//        super.onStart();
-//        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-//
-//    }
-//
-//    private void initializeLocationClient() {
-//        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-//    }
-//
-//    private void checkLocationPermission() {
-//        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-//                != PackageManager.PERMISSION_GRANTED) {
-//            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-//        } else {
-//            getLastKnownLocation(this::fetchWeatherData);
-//        }
-//    }
-//
-//    private void getLastKnownLocation(LocationCallback callback) {
-//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//            return;
-//        }
-//        fusedLocationClient.getLastLocation()
-//                .addOnCompleteListener(this, task -> {
-//                    if (task.isSuccessful() && task.getResult() != null) {
-//                        callback.onLocationReceived(task.getResult());
-//                    }
-//                });
-//    }
-//
-//    private void fetchWeatherData(Location location) {
-//        if (location != null) {
-//            weatherRepository = new WeatherRepository();
-//            weatherRepository.getWeatherData(location.getLatitude(), location.getLongitude(), new WeatherDataCallback());
-//        }
-//    }
-//
-//    private class WeatherDataCallback implements WeatherRepository.WeatherCallback {
-//        @Override
-//        public void onWeatherDataReceived() {
-//            runOnUiThread(() -> updateWeatherUI());
-//        }
-//    }
-//
-//    private void initializeWeatherData() {
-//        Weather weather = Weather.getInstance();
-//        tvTemperature.setText("온도: 로딩 중...");
-//        tvSky.setText("하늘 상태: 로딩 중...");
-//        tvPrecipitationType.setText("강수 형태: 로딩 중...");
-//        tvPrecipitation.setText("강수량: 로딩 중...");
-//    }
-//
-//    private void updateWeatherUI() {
-//        Weather weather = Weather.getInstance();
-//        tvTemperature.setText("온도: " + weather.getTemperature() + "°C");
-//        tvSky.setText("하늘 상태: " + weather.getSky());
-//        tvPrecipitationType.setText("강수 형태: " + weather.getPrecipitationType());
-//        tvPrecipitation.setText("강수량: " + weather.getPrecipitation());
-//        Log.d("MainActivity", "온도: " + weather.getTemperature() + "°C");
-//        Log.d("MainActivity", "하늘 상태: " + weather.getSky());
-//        Log.d("MainActivity", "강수 형태: " + weather.getPrecipitationType());
-//        Log.d("MainActivity", "강수량: " + weather.getPrecipitation());
-//
-//        GradientDrawable gradientDrawable = backgroundColorManager.getBackgroundDrawable();
-//        mainLayout.setBackground(gradientDrawable);
-//    }
-//
-//    @Override
-//    protected void onCreate(@Nullable Bundle savedInstanceState) {
-//        super.onCreate(savedInstanceState);
-//        setContentView(R.layout.activity_main);
-//
-//        todoRepository = TodoRepository.getInstance(this);
-//        currentDate = LocalDate.now();
-//
-//        // 상단 툴바에 달력 버튼 추가
-//        Toolbar toolbar = findViewById(R.id.toolbar);
-//        setSupportActionBar(toolbar);
-//
-//        RecyclerView recyclerView = findViewById(R.id.recycler_todos);
-//        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-//        todoAdapter = new TodoAdapter();
-//        todoAdapter.setTodoListener(this);
-//        recyclerView.setAdapter(todoAdapter);
-//
-//        FloatingActionButton fabAddTodo = findViewById(R.id.fab_add_todo);
-//        fabAddTodo.setOnClickListener(v -> showAddTodoDialog());
-//
-//        loadTodosByDate(currentDate);
-//        setupCalendarDialog();
-//    }
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // 기존 초기화 코드...
+        initializeWeatherViews();
+        initializeLocationClient();
+        initializeWeatherData();
+        
+        todoRepository = TodoRepository.getInstance(this);
+        currentDate = LocalDate.now();
+
+        // 상단 툴바에 달력 버튼 추가
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        RecyclerView recyclerView = findViewById(R.id.recycler_todos);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        todoAdapter = new TodoAdapter();
+        todoAdapter.setTodoListener(this);
+        recyclerView.setAdapter(todoAdapter);
+
+        FloatingActionButton fabAddTodo = findViewById(R.id.fab_add_todo);
+        fabAddTodo.setOnClickListener(v -> showAddTodoDialog());
+
+        loadTodosByDate(currentDate);
+        setupCalendarDialog();
+    }
+
+    private void initializeWeatherViews() {
+        tvTemperature = findViewById(R.id.tv_temperature);
+        tvTempRange = findViewById(R.id.tv_temp_range);
+        tvSky = findViewById(R.id.tv_sky);
+        tvPrecipitationType = findViewById(R.id.tv_precipitation_type);
+        tvPrecipitation = findViewById(R.id.tv_precipitation);
+    }
+    
+    private void initializeLocationClient() {
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+    }   
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        checkLocationPermission();
+    }
+
+    private void checkLocationPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+        } else {
+            getLastKnownLocation(this::fetchWeatherData);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, 
+                                        String[] permissions, 
+                                        int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 1) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                getLastKnownLocation(this::fetchWeatherData);
+            } else {
+                Toast.makeText(this, "위치 권한이 필요합니다.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+
+    private void getLastKnownLocation(LocationCallback callback) {
+        if (ActivityCompat.checkSelfPermission(this, 
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(this, location -> {
+                    if (location != null) {
+                        callback.onLocationReceived(location);
+                    }
+                })
+                .addOnFailureListener(e -> 
+                    Toast.makeText(this, "위치를 가져올 수 없습니다.", Toast.LENGTH_SHORT).show()
+                );
+    }
+
+    private void fetchWeatherData(Location location) {
+        if (location != null) {
+            weatherRepository = new WeatherRepository();
+            weatherRepository.getWeatherData(
+                location.getLatitude(), 
+                location.getLongitude(), 
+                new WeatherDataCallback()
+            );
+        }
+    }
+
+    private class WeatherDataCallback implements WeatherRepository.WeatherCallback {
+        @Override
+        public void onWeatherDataReceived() {
+            runOnUiThread(() -> updateWeatherUI());
+        }
+    }
+
+    private void initializeWeatherData() {
+        tvTemperature.setText("현재 온도: 로딩 중...");
+        tvTempRange.setText("최저/최고: --/--");
+        tvSky.setText("하늘 상태: 로딩 중...");
+        tvPrecipitationType.setText("강수 형태: 로딩 중...");
+        tvPrecipitation.setText("강수량: 로딩 중...");
+    }
+    
+    private void updateWeatherUI() {
+        Weather weather = Weather.getInstance();
+        tvTemperature.setText(String.format("현재 온도: %.1f°C", weather.getTemperature()));
+        tvTempRange.setText(String.format("최저/최고: %.1f°C/%.1f°C", 
+            weather.getMinTemperature(), 
+            weather.getMaxTemperature()));
+        
+        String skyStatus;
+        switch (weather.getSky()) {
+            case 1:
+                skyStatus = "맑음";
+                break;
+
+            case 3:
+                skyStatus = "구름 많음";
+                break;
+            case 4:
+                skyStatus = "흐림";
+                break;
+            default:
+                skyStatus = "알 수 없음";
+        }
+        tvSky.setText("하늘 상태: " + skyStatus);
+        
+        String precipitationType;
+        switch (weather.getPrecipitationType()) {
+            case 0:
+                precipitationType = "없음";
+                break;
+            case 1:
+                precipitationType = "비";
+                break;
+            case 2:
+                precipitationType = "비/눈";
+                break;
+            case 3:
+                precipitationType = "눈";
+                break;
+            default:
+                precipitationType = "알 수 없음";
+        }
+        tvPrecipitationType.setText("강수 형태: " + precipitationType);
+        tvPrecipitation.setText("강수량: " + weather.getPrecipitation());
+    }
+
+
 
     /**
      * 달력 다이얼로그의 기본 설정을 수행합니다.
      * - 날짜 선택 리스너 설정
-     * - Todo가 있는 날짜에 점 표시
+     * - Todo가 있는 날에 점 표시
      */
     private void setupCalendarDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
