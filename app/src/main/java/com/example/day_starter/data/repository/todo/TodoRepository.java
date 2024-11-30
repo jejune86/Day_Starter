@@ -16,7 +16,8 @@ public class TodoRepository {
     private final ExecutorService executorService;
 
     private TodoRepository(Context context) {
-        TodoDatabase database = TodoDatabase.getInstance(context);
+        Context applicationContext = context.getApplicationContext();
+        TodoDatabase database = TodoDatabase.getInstance(applicationContext);
         todoDao = database.todoDao();
         executorService = Executors.newFixedThreadPool(4);
     }
