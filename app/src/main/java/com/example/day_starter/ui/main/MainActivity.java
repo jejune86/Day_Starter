@@ -19,7 +19,6 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -83,7 +82,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
     private RecyclerView fullScreenTodoRecyclerView;
     private TextView fullScreenDateTextView;
     private ColorManager colorManager;
-    private Toolbar toolbar;
+
 
 
     // 콜백 인터페이스 추가
@@ -107,7 +106,6 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         checkLocationPermission();
         
-        toolbar = findViewById(R.id.toolbar);
         initializeWeatherViews();
         initializeLocationClient();
         initializeWeatherData();
@@ -117,7 +115,6 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         currentDate = LocalDate.now();
 
         
-        setSupportActionBar(toolbar);
         initializeLocationClient();
 
         RecyclerView recyclerView = findViewById(R.id.recycler_todos);
@@ -128,6 +125,11 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
 
         FloatingActionButton fabAddTodo = findViewById(R.id.fab_add_todo);
         fabAddTodo.setOnClickListener(v -> showAddTodoDialog());
+
+        FloatingActionButton fabOpenCalender = findViewById(R.id.fab_open_calendar);
+        fabOpenCalender.setOnClickListener(v->showFullScreenTodoList());
+
+
 
         loadTodosByDate(LocalDate.now());
         setupCalendarDialog();
@@ -314,26 +316,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         
         // 배경색 설정
         View mainContent = findViewById(R.id.main_content);
-//        mainContent.setBackground(colorManager.getBackgroundDrawable());
-//
-//        // 텍스트 색 설정
-//        int textColor = colorManager.getTextColor();
-//        tvTemperature.setTextColor(textColor);
-//        tvTempRange.setTextColor(textColor);
-//        tvSky.setTextColor(textColor);
-//        tvPrecipitationType.setTextColor(textColor);
-//        tvPrecipitation.setTextColor(textColor);
-//
-//        // 버튼 색 설정
-//        headlinesButton.setBackgroundColor(colorManager.getBackgroundColor3());
-//
-//
-//        toolbar.setBackgroundColor(colorManager.getToolbarColor());
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-//            Window window = getWindow();
-//            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-//            window.setStatusBarColor(colorManager.getToolbarColor());
-//        }
+
 
         // 로딩 화면 숨기고 메인 컨텐츠 표시
         findViewById(R.id.loading_layout).setVisibility(View.GONE);
@@ -377,34 +360,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         });
     }
 
-    /**
-     * 상단 툴바의 메뉴를 생성합니다.
-     */
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main_menu, menu);
-        return true;
-    }
 
-    /**
-     * 툴바 메뉴 아이템 선택 처리를 수행합니다.
-     */
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_calendar) {
-            // 헤드라인이 열려있으면 먼저 닫기
-            if (isNewsVisible) {
-                View newsContainer = findViewById(R.id.news_container);
-                View mainContent = findViewById(R.id.main_content);
-                newsContainer.setVisibility(View.GONE);
-                mainContent.setVisibility(View.VISIBLE);
-                isNewsVisible = false;
-            }
-            showFullScreenTodoList();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 
     /**
      * 특정 날짜의 할 일 목록을 로드하여 화면에 표시합니다.
@@ -582,6 +538,14 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
     private void showFullScreenTodoList() {
         if (fullScreenCalendarView.getParent() != null) {
             ((ViewGroup) fullScreenCalendarView.getParent()).removeView(fullScreenCalendarView);
+        }
+
+        if (isNewsVisible) {
+            View newsContainer = findViewById(R.id.news_container);
+            View mainContent = findViewById(R.id.main_content);
+            newsContainer.setVisibility(View.GONE);
+            mainContent.setVisibility(View.VISIBLE);
+            isNewsVisible = false;
         }
         
         View mainContent = findViewById(R.id.main_content);
