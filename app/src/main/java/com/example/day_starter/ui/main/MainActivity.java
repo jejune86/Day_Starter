@@ -284,53 +284,56 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         // 강수 형태가 없을 때는 하늘 상태에 따라 아이콘 설정
         if (weather.getPrecipitationType() == 0) {
             if (weather.getSky() <= 5) {
-                weatherIcon.setImageResource(R.drawable.ic_weather_sunny);
+                weatherIcon.setImageResource(R.drawable.ic_sunny);
             } else if (weather.getSky() <= 8) {
-                weatherIcon.setImageResource(R.drawable.ic_weather_cloudy); 
+                weatherIcon.setImageResource(R.drawable.ic_cloudy);
             } else if (weather.getSky() <= 10) {
-                weatherIcon.setImageResource(R.drawable.ic_weather_overcast);
+                weatherIcon.setImageResource(R.drawable.ic_cloudy);
             } else {
-                weatherIcon.setImageResource(R.drawable.ic_weather_sunny);
+                weatherIcon.setImageResource(R.drawable.ic_sunny);
             }
         } else {
             // 강수 형태가 있을 때
             switch (weather.getPrecipitationType()) {
                 case 1:
-                    weatherIcon.setImageResource(R.drawable.ic_weather_rain);
+                    weatherIcon.setImageResource(R.drawable.ic_rainy);
                     break;
                 case 2:
-                    weatherIcon.setImageResource(R.drawable.ic_weather_rain);
+                    weatherIcon.setImageResource(R.drawable.ic_mix_rain);
                     break;
                 case 3:
-                    weatherIcon.setImageResource(R.drawable.ic_weather_snow);
+                    weatherIcon.setImageResource(R.drawable.ic_snow);
                     break;
                 case 4:
-                    weatherIcon.setImageResource(R.drawable.ic_weather_rain);
+                    weatherIcon.setImageResource(R.drawable.ic_rainy);
                     break;
                 default:
-                    weatherIcon.setImageResource(R.drawable.ic_weather_sunny);
+                    weatherIcon.setImageResource(R.drawable.ic_sunny);
             }
         }
         
         // 배경색 설정
         View mainContent = findViewById(R.id.main_content);
-        mainContent.setBackground(colorManager.getBackgroundDrawable());
-        
-        // 텍스트 색 설정
-        int textColor = colorManager.getTextColor();
-        tvTemperature.setTextColor(textColor);
-        tvTempRange.setTextColor(textColor);
-        tvSky.setTextColor(textColor);
-        tvPrecipitationType.setTextColor(textColor);
-        tvPrecipitation.setTextColor(textColor);
-        
-
-        toolbar.setBackgroundColor(colorManager.getToolbarColor());
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            Window window = getWindow();
-            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-            window.setStatusBarColor(colorManager.getToolbarColor());
-        }
+//        mainContent.setBackground(colorManager.getBackgroundDrawable());
+//
+//        // 텍스트 색 설정
+//        int textColor = colorManager.getTextColor();
+//        tvTemperature.setTextColor(textColor);
+//        tvTempRange.setTextColor(textColor);
+//        tvSky.setTextColor(textColor);
+//        tvPrecipitationType.setTextColor(textColor);
+//        tvPrecipitation.setTextColor(textColor);
+//
+//        // 버튼 색 설정
+//        headlinesButton.setBackgroundColor(colorManager.getBackgroundColor3());
+//
+//
+//        toolbar.setBackgroundColor(colorManager.getToolbarColor());
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+//            Window window = getWindow();
+//            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+//            window.setStatusBarColor(colorManager.getToolbarColor());
+//        }
 
         // 로딩 화면 숨기고 메인 컨텐츠 표시
         findViewById(R.id.loading_layout).setVisibility(View.GONE);
@@ -589,7 +592,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         // 현재 날짜 표시
         fullScreenDateTextView.setText(currentDate.format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")));
         
-        // Todo 있는 날짜에 점 표시
+        // Todo가 있는 날짜에 점 표시
         updateCalendarDecorations();
         
         // 초기 할일 목록 로드

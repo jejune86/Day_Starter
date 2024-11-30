@@ -25,19 +25,28 @@ public class ColorManager {
     private static final int RAINY_SUNRISE2 = Color.rgb(170, 95, 68);
     private static final int RAINY_SUNSET1 = Color.rgb(230, 77, 20);    // 더 밝은 흐린 일몰
     private static final int RAINY_SUNSET2 = Color.rgb(170, 61, 20);    // 밝은 다크 흐린 일몰
-    private static final int DEFAULT_SKY1 = Color.rgb(255, 255, 255);
-    private static final int DEFAULT_SKY2 = Color.rgb(255, 255, 255);
+    private static final int DEFAULT_SKY = Color.rgb(255, 255, 255);
     private static final int DAYTIME_CLEAR1 = Color.rgb(155, 226, 255); // 더 밝은 하늘색
     private static final int DAYTIME_CLEAR2 = Color.rgb(120, 175, 196); // 더 밝은 다크 하늘색
     private static final int DAYTIME_CLOUDY1 = Color.rgb(196, 216, 242); // 더 밝은 강철 블루
     private static final int DAYTIME_CLOUDY2 = Color.rgb(152, 167, 187); // 더 밝은 다크 강철 블루
     private static final int DAYTIME_RAINY1 = Color.rgb(148, 148, 148);  // 더 밝은 회색
     private static final int DAYTIME_RAINY2 = Color.rgb(116, 116, 116);  // 더 밝은 다크 회색
-    
+    private static final int CLEAR_NIGHT3 = Color.rgb(90, 90, 180); // 매우 연한 밤색
+    private static final int CLEAR_SUNRISE3 = Color.rgb(255, 200, 150); // 매우 연한 일출색
+    private static final int CLEAR_SUNSET3 = Color.rgb(255, 150, 100); // 매우 연한 일몰색
+    private static final int CLOUDY_SUNRISE3 = Color.rgb(255, 180, 140); // 매우 연한 구름 많은 일출색
+    private static final int CLOUDY_SUNSET3 = Color.rgb(255, 130, 100); // 매우 연한 구름 많은 일몰색
+    private static final int RAINY_SUNRISE3 = Color.rgb(255, 180, 140); // 매우 연한 흐린 일출색
+    private static final int RAINY_SUNSET3 = Color.rgb(255, 130, 100); // 매우 연한 흐린 일몰색
+    private static final int DAYTIME_CLEAR3 = Color.rgb(200, 250, 255); // 매우 연한 하늘색
+    private static final int DAYTIME_CLOUDY3 = Color.rgb(220, 230, 250); // 매우 연한 강철 블루
+    private static final int DAYTIME_RAINY3 = Color.rgb(200, 200, 200); // 매우 연한 회색
 
     private final SunTime sunTime;
     private int backgroundColor1;
     private int backgroundColor2;
+    private int backgroundColor3;
     private GradientDrawable backgroundDrawable;
     
     public ColorManager(Context context) {
@@ -63,17 +72,22 @@ public class ColorManager {
         return backgroundDrawable;
     }
 
+    public int getBackgroundColor3() {
+        return backgroundColor3;
+    }
+
     private void calculateBackgroundColor() {
         GradientDrawable gradient = new GradientDrawable();
         gradient.setShape(GradientDrawable.RECTANGLE);
         
         // 기본 배경색 설정
         gradient.setColors(new int[]{
-            DEFAULT_SKY1,
-            DEFAULT_SKY2
+            DEFAULT_SKY,
+            DEFAULT_SKY
         });
-        backgroundColor1 = DEFAULT_SKY1;
-        backgroundColor2 = DEFAULT_SKY2;
+        backgroundColor1 = DEFAULT_SKY;
+        backgroundColor2 = DEFAULT_SKY;
+        backgroundColor3 = DEFAULT_SKY;
         gradient.setOrientation(GradientDrawable.Orientation.TOP_BOTTOM);
         
         try {
@@ -88,25 +102,30 @@ public class ColorManager {
             if (current < sunrise) {
                 backgroundColor1 = CLEAR_NIGHT1;
                 backgroundColor2 = CLEAR_NIGHT2;
+                backgroundColor3 = CLEAR_NIGHT3;
             } else if (current < sunrise + 100) {
                 backgroundColor1 = getSunriseGradientColors(weather)[0];
                 backgroundColor2 = getSunriseGradientColors(weather)[1];
+                backgroundColor3 = getSunriseGradientColors(weather)[2];
             } else if (current < sunset - 100) {
                 backgroundColor1 = getDaytimeGradientColors(weather)[0];
                 backgroundColor2 = getDaytimeGradientColors(weather)[1];
+                backgroundColor3 = getDaytimeGradientColors(weather)[2];
             } else if (current < sunset + 100) {
                 backgroundColor1 = getSunsetGradientColors(weather)[0];
                 backgroundColor2 = getSunsetGradientColors(weather)[1];
+                backgroundColor3 = getSunsetGradientColors(weather)[2];
             } else {
                 backgroundColor1 = CLEAR_NIGHT1;
                 backgroundColor2 = CLEAR_NIGHT2;
+                backgroundColor3 = CLEAR_NIGHT3;
             }
         } catch (IllegalStateException e) {
             // Weather 인스턴스가 초기화되지 않은 경우 기본 배경색 유지
         }
         backgroundDrawable.setColors(new int[]{
             backgroundColor1,
-            backgroundColor2
+            backgroundColor2,
         });
     }
 
@@ -114,17 +133,20 @@ public class ColorManager {
         if (weather.getSky() <= 5) {
             return new int[]{
                 CLEAR_SUNRISE1,
-                CLEAR_SUNRISE2
+                CLEAR_SUNRISE2,
+                CLEAR_SUNRISE3
             };
         } else if (weather.getSky() <= 8) {
             return new int[]{
                 CLOUDY_SUNRISE1,
-                CLOUDY_SUNRISE2
+                CLOUDY_SUNRISE2,
+                CLOUDY_SUNRISE3
             };
         } else {
             return new int[]{
                 RAINY_SUNRISE1,
-                RAINY_SUNRISE2
+                RAINY_SUNRISE2,
+                RAINY_SUNRISE3
             };
         }
     }
@@ -133,17 +155,20 @@ public class ColorManager {
         if (weather.getSky() <= 5) {
             return new int[]{
                 CLEAR_SUNSET1,
-                CLEAR_SUNSET2
+                CLEAR_SUNSET2,
+                CLEAR_SUNSET3
             };
         } else if (weather.getSky() <= 8) {
             return new int[]{
                 CLOUDY_SUNSET1,
-                CLOUDY_SUNSET2
+                CLOUDY_SUNSET2,
+                CLOUDY_SUNSET3
             };
         } else {
             return new int[]{
                 RAINY_SUNSET1,
-                RAINY_SUNSET2
+                RAINY_SUNSET2,
+                RAINY_SUNSET3
             };
         }
     }
@@ -152,17 +177,20 @@ public class ColorManager {
         if (weather.getSky() <= 5) {
             return new int[]{
                 DAYTIME_CLEAR1,
-                DAYTIME_CLEAR2
+                DAYTIME_CLEAR2,
+                DAYTIME_CLEAR3
             };
         } else if (weather.getSky() <= 8) {
             return new int[]{
                 DAYTIME_CLOUDY1,
-                DAYTIME_CLOUDY2
+                DAYTIME_CLOUDY2,
+                DAYTIME_CLOUDY3
             };
         } else {
             return new int[]{
                 DAYTIME_RAINY1,
-                DAYTIME_RAINY2
+                DAYTIME_RAINY2,
+                DAYTIME_RAINY3
             };
         }
     }
