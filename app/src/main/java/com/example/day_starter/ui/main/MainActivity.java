@@ -1,6 +1,8 @@
 package com.example.day_starter.ui.main;
 
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
+import android.graphics.drawable.GradientDrawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.view.View;
@@ -51,8 +53,6 @@ import retrofit2.Response;
 import java.io.IOException;
 import android.util.Log;
 
-import android.view.ViewGroup;
-
 import com.example.day_starter.util.ColorManager;
 
 
@@ -60,8 +60,7 @@ import com.example.day_starter.util.ColorManager;
 public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoListener {
 
     private TodoRepository todoRepository;
-    private TodoAdapter todoAdapter;
-    private MaterialCalendarView calendarDialog;
+    private TodoAdapter todoAdapter, calendarTodoAdapter;
     private LocalDate currentDate;
     private FusedLocationProviderClient fusedLocationClient;
     private WeatherRepository weatherRepository;
@@ -72,10 +71,13 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
     private boolean isNewsVisible = false;
     private View fullScreenCalendarView;
     private MaterialCalendarView calendarView;
-    private RecyclerView fullScreenTodoRecyclerView;
-    private TextView fullScreenDateTextView;
+    private RecyclerView calendarRecyclerTodos, mainRecyclerTodos;
+    private TextView calendarSelectedDateText, date;
     private ColorManager colorManager;
-
+    private ImageView weatherIcon;
+    private View calendarContainer;
+    private View mainContent;
+    private View newsContainer;
 
 
     // 콜백 인터페이스 추가
@@ -96,25 +98,26 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        date = findViewById(R.id.date);
+
+        todoRepository = TodoRepository.getInstance(this);
+        currentDate = LocalDate.now();
+
+        date.setText(currentDate.format(DateTimeFormatter.ofPattern("yyyy MM dd")));
+
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         checkLocationPermission();
         
         initializeWeatherViews();
         initializeLocationClient();
         initializeWeatherData();
-        initializeFullScreenCalendarView();
-        
-        todoRepository = TodoRepository.getInstance(this);
-        currentDate = LocalDate.now();
+        initializeCalendarView();
+        initializeNewsViews();
+        initializeTodoViews();
 
         
-        initializeLocationClient();
+        
 
-        RecyclerView recyclerView = findViewById(R.id.recycler_todos);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        todoAdapter = new TodoAdapter();
-        todoAdapter.setTodoListener(this);
-        recyclerView.setAdapter(todoAdapter);
 
         FloatingActionButton fabAddTodo = findViewById(R.id.fab_add_todo);
         fabAddTodo.setOnClickListener(v -> showAddTodoDialog());
@@ -122,25 +125,36 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         FloatingActionButton fabOpenCalender = findViewById(R.id.fab_open_calendar);
         fabOpenCalender.setOnClickListener(v -> toggleCalendarVisibility());
 
-        loadTodosByDate(LocalDate.now());
-        setupCalendarDialog();
+    }
 
+    private void initializeTodoViews() {
+        mainRecyclerTodos = findViewById(R.id.recycler_todos);
+        mainRecyclerTodos.setLayoutManager(new LinearLayoutManager(this));
+        todoAdapter = new TodoAdapter();
+        todoAdapter.setTodoListener(this);
+        mainRecyclerTodos.setAdapter(todoAdapter);
+        loadTodosByDate(LocalDate.now());
+        updateCalendarDecorations();
+    }
+
+    private void initializeNewsViews() {
+        newsContainer = findViewById(R.id.news_container);
         newsRecyclerView = findViewById(R.id.recycler_news);
         newsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         newsAdapter = new NewsAdapter();
         newsRecyclerView.setAdapter(newsAdapter);
-
         headlinesButton = findViewById(R.id.btn_headlines);
         headlinesButton.setOnClickListener(v -> toggleNewsVisibility());
-
     }
 
     private void initializeWeatherViews() {
+        mainContent = findViewById(R.id.main_content);
         tvTemperature = findViewById(R.id.tv_temperature);
         tvTempRange = findViewById(R.id.tv_temp_range);
         tvSky = findViewById(R.id.tv_sky);
         tvPrecipitationType = findViewById(R.id.tv_precipitation_type);
         tvPrecipitation = findViewById(R.id.tv_precipitation);
+        weatherIcon = findViewById(R.id.iv_weather);
     }
     
     private void initializeLocationClient() {
@@ -209,6 +223,13 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
                             updateWeatherUI();
                         });
                     }
+                    
+                    @Override
+                    public void onWeatherDataFailed() {
+                        runOnUiThread(() -> {
+                            showRetryButton();
+                        });
+                    }
                 }
             );
         }
@@ -219,58 +240,72 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         public void onWeatherDataReceived() {
             runOnUiThread(() -> updateWeatherUI());
         }
+        @Override
+        public void onWeatherDataFailed() {
+            runOnUiThread(() -> showRetryButton());
+        }
     }
 
     private void initializeWeatherData() {
-        tvTemperature.setText("현재 온도: 로딩 중...");
-        tvTempRange.setText("최저/최고: --/--");
-        tvSky.setText("하늘 상태: 로딩 중...");
-        tvPrecipitationType.setText("강수 형태: 로딩 중...");
-        tvPrecipitation.setText("강수량: 로딩 중...");
+        tvTemperature.setText("Current Temp: Loading...");
+        tvTempRange.setText("Min/Max: --/--");
+        tvSky.setText("Sky Status: Loading...");
+        tvPrecipitationType.setText("Precipitation Type: Loading...");
+        tvPrecipitation.setText("Precipitation: Loading...");
     }
     
     private void updateWeatherUI() {
         Weather weather = Weather.getInstance();
         
         // 날씨 UI 업데이트
-        tvTemperature.setText(String.format("현재 온도: %.1f°C", weather.getTemperature()));
-        tvTempRange.setText(String.format("최저/최고: %.1f°C/%.1f°C", 
+        tvTemperature.setText(String.format("Current Temp: %.1f°C", weather.getTemperature()));
+        tvTempRange.setText(String.format("Min/Max: %.1f°C/%.1f°C", 
             weather.getMinTemperature(), 
             weather.getMaxTemperature()));
         
         String skyStatus;
         int sky = weather.getSky();
         if (sky <= 5) {
-            skyStatus = "맑음";
+            skyStatus = "Clear";
         } else if (sky <= 8) {
-            skyStatus = "구름 많음";
+            skyStatus = "Partly Cloudy";
         } else {
-            skyStatus = "흐림";
+            skyStatus = "Cloudy";
         }
-        tvSky.setText("하늘 상태: " + skyStatus);
+        tvSky.setText("Sky Status: " + skyStatus);
         
         String precipitationType;
         switch (weather.getPrecipitationType()) {
             case 0:
-                precipitationType = "없음";
+                precipitationType = "None";
                 break;
             case 1:
-                precipitationType = "비";
+                precipitationType = "Rain";
                 break;
             case 2:
-                precipitationType = "비/눈";
+                precipitationType = "Rain/Snow";
                 break;
             case 3:
-                precipitationType = "눈";
+                precipitationType = "Snow";
                 break;
-            case 4 :
-                precipitationType = "소나기";
+            case 4:
+                precipitationType = "Shower";
                 break;
             default:
-                precipitationType = "알 수 없음";
+                precipitationType = "Unknown";
         }
-        tvPrecipitationType.setText("강수 형태: " + precipitationType);
-        tvPrecipitation.setText("강수량: " + weather.getPrecipitation());
+        tvPrecipitationType.setText("Precipitation Type: " + precipitationType);
+        String precipitationAmount = weather.getPrecipitation();
+        if (precipitationAmount.equals("강수없음")) {
+            precipitationAmount = "0mm";
+        }
+        else if (precipitationAmount.equals("1.0mm 미만")) {
+            precipitationAmount = "< 1mm";
+        }
+        else if (precipitationAmount.equals("50.0mm 이상")) {
+            precipitationAmount = "> 50mm";
+        }
+        tvPrecipitation.setText("Precipitation: " + precipitationAmount);
 
         ImageView weatherIcon = findViewById(R.id.iv_weather);
 
@@ -304,53 +339,16 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
                     weatherIcon.setImageResource(R.drawable.ic_sunny);
             }
         }
-        
-        // 배경색 설정
-        View mainContent = findViewById(R.id.main_content);
 
+
+        weatherIcon.setBackground(colorManager.getBackgroundDrawable());
+        
+        GradientDrawable background = (GradientDrawable) weatherIcon.getBackground();
+        background.setCornerRadius(50);
 
         // 로딩 화면 숨기고 메인 컨텐츠 표시
         findViewById(R.id.loading_layout).setVisibility(View.GONE);
-        mainContent.setVisibility(View.VISIBLE);
     }
-
-
-
-    /**
-     * 달력 다이얼로그의 기본 설정
-     * - 날짜 선택 리스너 설정
-     * - Todo가 있는 날에 점 표시
-     */
-    private void setupCalendarDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        View dialogView = getLayoutInflater().inflate(R.layout.dialog_calendar, null);
-        calendarDialog = dialogView.findViewById(R.id.calendarView);
-        
-        calendarDialog.setOnDateChangedListener((widget, date, selected) -> {
-            // 날짜 선택시 전체화면 달력 뷰로 전환
-            showFullScreenTodoList();
-            builder.create().dismiss();
-        });
-
-        builder.setView(dialogView);
-        builder.setTitle("날짜 선택");
-        
-        todoRepository.getAllTodos(todos -> {
-            Set<CalendarDay> dates = new HashSet<>();
-            for (Todo todo : todos) {
-                try {
-                    LocalDate localDate = LocalDate.parse(todo.getDate());
-                    dates.add(CalendarDay.from(localDate.getYear(), 
-                                             localDate.getMonthValue(), 
-                                             localDate.getDayOfMonth()));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            runOnUiThread(() -> calendarDialog.addDecorator(new EventDecorator(dates)));
-        });
-    }
-
 
 
     /**
@@ -396,10 +394,10 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
                             })
                         );
                     } else {
-                        Toast.makeText(this, "할 일 제목을 입력하세요.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Please enter a task title.", Toast.LENGTH_SHORT).show();
                     }
                 })
-                .setNegativeButton("취소", null)
+                .setNegativeButton("Cancel", null)
                 .show();
     }
 
@@ -413,7 +411,6 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
                 if (todoAdapter != null) {
                     loadTodosByDate(currentDate, todoAdapter);
                 }
-                updateCalendarDecorations();
             })
         );
     }
@@ -553,41 +550,6 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
             });
     }
 
-    private void showFullScreenTodoList() {
-        if (fullScreenCalendarView.getParent() != null) {
-            ((ViewGroup) fullScreenCalendarView.getParent()).removeView(fullScreenCalendarView);
-        }
-
-        if (isNewsVisible) {
-            View newsContainer = findViewById(R.id.news_container);
-            View mainContent = findViewById(R.id.main_content);
-            newsContainer.setVisibility(View.GONE);
-            mainContent.setVisibility(View.VISIBLE);
-            isNewsVisible = false;
-        }
-        
-        View mainContent = findViewById(R.id.main_content);
-        ViewGroup rootView = findViewById(android.R.id.content);
-        mainContent.setVisibility(View.GONE);
-        rootView.addView(fullScreenCalendarView);
-        
-        // 현재 날짜 표시
-        fullScreenDateTextView.setText(currentDate.format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")));
-        
-        // Todo가 있는 날짜에 점 표시
-        updateCalendarDecorations();
-        
-        // 초기 할일 목록 로드
-        loadTodosByDate(currentDate, todoAdapter);
-    }
-
-    private void hideFullScreenTodoList() {
-        ViewGroup rootView = findViewById(android.R.id.content);
-        rootView.removeView(fullScreenCalendarView);
-        View mainContent = findViewById(R.id.main_content);
-        mainContent.setVisibility(View.VISIBLE);
-        loadTodosByDate(currentDate);  // 메인 화면 할일 목록 갱신
-    }
 
     private void updateCalendarDecorations() {
         todoRepository.getAllTodos(todos -> {
@@ -612,37 +574,43 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
                     mainCalendarView.addDecorator(new EventDecorator(dates));
                 }
                 
-                // 전��화면 달력 업데이트
+                // 전화면 달력 업데이트
                 if (calendarView != null) {
                     calendarView.removeDecorators();
                     calendarView.addDecorator(new EventDecorator(dates));
                 }
-                
-                // 다이얼로그 달력 업데이트
-                if (calendarDialog != null) {
-                    calendarDialog.removeDecorators();
-                    calendarDialog.addDecorator(new EventDecorator(dates));
-                }
+
             });
         });
     }
 
-    private void initializeFullScreenCalendarView() {
-
+    private void initializeCalendarView() {
+        calendarContainer = findViewById(R.id.calendar_container);
         calendarView = findViewById(R.id.calendar_view);
-        fullScreenTodoRecyclerView = findViewById(R.id.recycler_todos);
-        fullScreenDateTextView = findViewById(R.id.tv_selected_date);
-        
-        fullScreenTodoRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        todoAdapter = new TodoAdapter();
-        todoAdapter.setTodoListener(this);
-        fullScreenTodoRecyclerView.setAdapter(todoAdapter);
+        calendarRecyclerTodos = findViewById(R.id.calendar_recycler_todos);
+        calendarSelectedDateText = findViewById(R.id.tv_selected_date);
+        calendarRecyclerTodos.setLayoutManager(new LinearLayoutManager(this));
+        calendarTodoAdapter = new TodoAdapter();
+        calendarTodoAdapter.setTodoListener(this);
+
+        int nightModeFlags = getResources().getConfiguration().uiMode & 
+        Configuration.UI_MODE_NIGHT_MASK;
+        if (nightModeFlags == Configuration.UI_MODE_NIGHT_YES) {
+            // 다크모드일 때 캘린더 텍스트 색상 설정
+            calendarView.setHeaderTextAppearance(R.style.CustomHeaderTitle);
+            calendarView.setWeekDayTextAppearance(R.style.CustomHeaderTitle);
+            calendarView.setDateTextAppearance(R.style.CustomHeaderTitle);
+        }
+
+
+        calendarRecyclerTodos.setLayoutManager(new LinearLayoutManager(this));
+        calendarRecyclerTodos.setAdapter(calendarTodoAdapter);
         
         // 달 이벤트 설정
         calendarView.setOnDateChangedListener((widget, date, selected) -> {
             LocalDate selectedDate = LocalDate.of(date.getYear(), date.getMonth(), date.getDay());
-            fullScreenDateTextView.setText(selectedDate.format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")));
-            loadTodosByDate(selectedDate, todoAdapter);
+            calendarSelectedDateText.setText(selectedDate.format(DateTimeFormatter.ofPattern("yyyy MM dd")));
+            loadTodosByDate(selectedDate, calendarTodoAdapter);
         });
 
     }
@@ -651,48 +619,45 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         String dateStr = date.toString();
         todoRepository.getTodosByDate(dateStr, todos ->
             runOnUiThread(() -> adapter.setTodos(todos))
+
         );
     }
 
     private void toggleCalendarVisibility() {
-        View calendarContainer = findViewById(R.id.calendar_container);
-        View mainContent = findViewById(R.id.main_content);
-        View newsContainer = findViewById(R.id.news_container);
-        MaterialCalendarView calendarView = findViewById(R.id.calendar_view);
-        TextView selectedDateText = findViewById(R.id.tv_selected_date);
-        RecyclerView calendarRecyclerView = findViewById(R.id.calendar_recycler_todos);
-        
         if (calendarContainer.getVisibility() == View.VISIBLE) {
             calendarContainer.setVisibility(View.GONE);
-            mainContent.setVisibility(View.VISIBLE);
         } else {
             calendarContainer.setVisibility(View.VISIBLE);
-            mainContent.setVisibility(View.GONE);
             newsContainer.setVisibility(View.GONE);
             isNewsVisible = false;
+
+            calendarSelectedDateText.setText(currentDate.format(DateTimeFormatter.ofPattern("yyyy MM dd")));
+            loadTodosByDate(currentDate, calendarTodoAdapter);
             
-            // 달력 데코레이터 업데이트를 먼저 실행
-            updateCalendarDecorations();
-            
-            // 달력 초기화
-            if (calendarRecyclerView.getAdapter() == null) {
-                todoAdapter.setTodoListener(this);
-                calendarRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-                calendarRecyclerView.setAdapter(todoAdapter);
-            }
-            
-            // 현재 날짜 설정
-            selectedDateText.setText(currentDate.format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")));
-            loadTodosByDate(currentDate, todoAdapter);
-            
-            // 날짜 선택 리스너 설정
             calendarView.setOnDateChangedListener((widget, date, selected) -> {
                 LocalDate selectedDate = LocalDate.of(date.getYear(), date.getMonth(), date.getDay());
-                selectedDateText.setText(selectedDate.format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")));
-                loadTodosByDate(selectedDate, todoAdapter);
+                calendarSelectedDateText.setText(selectedDate.format(DateTimeFormatter.ofPattern("yyyy MM dd")));
+                loadTodosByDate(selectedDate, calendarTodoAdapter);
             });
         }
     }
 
+    private void showRetryButton() {
+        findViewById(R.id.loading_progress).setVisibility(View.GONE);
+        findViewById(R.id.loading_text).setVisibility(View.GONE);
+        
+        MaterialButton retryButton = findViewById(R.id.retry_button);
+    
+        
+        retryButton.setVisibility(View.VISIBLE);
+        retryButton.setOnClickListener(v -> {
+            retryButton.setVisibility(View.GONE);
+            findViewById(R.id.loading_progress).setVisibility(View.VISIBLE);
+            findViewById(R.id.loading_text).setVisibility(View.VISIBLE);
+            
+            // 위치 정보 다시 가져오기
+            checkLocationPermission();
+        });
+    }
 
 } 

@@ -28,6 +28,7 @@ public class WeatherRepository {
     // WeatherCallback 인터페이스 정의
     public interface WeatherCallback {
         void onWeatherDataReceived();
+        void onWeatherDataFailed();
     }
 
     public void getWeatherData(double latitude, double longitude, WeatherCallback callback) {
@@ -94,6 +95,9 @@ public class WeatherRepository {
             @Override
             public void onFailure(Call<WeatherResponse> call, Throwable t) {
                 Log.e(TAG, "API call failed: " + t.getMessage());
+                if (callback != null) {
+                    callback.onWeatherDataFailed();
+                }
             }
         });
     }

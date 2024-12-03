@@ -27,15 +27,14 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            style="@style/CustomTextStyle.Body" />
 
         <ImageButton
             android:id="@+id/button_more"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="더보기"
+            android:contentDescription="More"
             android:src="@drawable/ic_more_vert" />
 
     </LinearLayout>
