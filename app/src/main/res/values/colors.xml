@@ -1,5 +1,5 @@
 <resources>
-    <color name="md_theme_primary">@color/md_theme_inverseOnSurface</color>
+    <color name="md_theme_primary">#3F51B5</color>
     <color name="md_theme_onPrimary">@color/md_theme_inverseOnSurface</color>
     <color name="md_theme_primaryContainer">#FFAB4B</color>
     <color name="md_theme_onPrimaryContainer">#482800</color>
@@ -15,7 +15,7 @@
     <color name="md_theme_onError">#FFFFFF</color>
     <color name="md_theme_errorContainer">#FFDAD6</color>
     <color name="md_theme_onErrorContainer">#410002</color>
-    <color name="md_theme_background">#FFF8F4</color>
+    <color name="md_theme_background">#F0E0DE</color>
     <color name="md_theme_onBackground">#262626</color>
     <color name="md_theme_surface">#FFF8F4</color>
     <color name="md_theme_onSurface">#221A12</color>

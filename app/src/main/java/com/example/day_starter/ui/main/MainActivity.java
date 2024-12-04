@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -95,6 +96,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
     private View newsContainer;
     private List<TarotCard> tarotCards;
     private Random random = new Random();
+    private ProgressBar newsLoadingSpinner;
 
     // 콜백 인터페이스 추가
     interface LocationCallback {
@@ -163,6 +165,12 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         newsRecyclerView.setAdapter(newsAdapter);
         headlinesButton = findViewById(R.id.btn_headlines);
         headlinesButton.setOnClickListener(v -> toggleNewsVisibility());
+
+        newsLoadingSpinner = findViewById(R.id.news_loading_spinner);
+
+        // 뉴스 로드 시작 시
+        newsLoadingSpinner.setVisibility(View.VISIBLE);
+        loadNewsHeadlines();
     }
 
     private void initializeWeatherViews() {
@@ -223,7 +231,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
                     }
                 })
                 .addOnFailureListener(e -> 
-                    Toast.makeText(this, "위치를 가져올 수 없습니다.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Could not get location", Toast.LENGTH_SHORT).show()
                 );
     }
 
@@ -560,11 +568,17 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
                 @Override
                 public void onFailure(Call<NewsResponse> call, Throwable t) {
                     Log.e("NewsAPI", "API 호출 실패", t);
-                    runOnUiThread(() -> 
-                        Toast.makeText(MainActivity.this, 
-                            "뉴스를 불러오는데 실패했습니다: " + t.getMessage(), 
-                            Toast.LENGTH_SHORT).show()
-                    );
+                    runOnUiThread(() -> {
+                        Toast.makeText(MainActivity.this, "Failed to load news: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                        newsLoadingSpinner.setVisibility(View.GONE);
+                        MaterialButton retryButton = findViewById(R.id.retry_button);
+                        retryButton.setVisibility(View.VISIBLE);
+                        retryButton.setOnClickListener(v -> {
+                            retryButton.setVisibility(View.GONE);
+                            newsLoadingSpinner.setVisibility(View.VISIBLE);
+                            loadNewsHeadlines();
+                        });
+                    });
                 }
             });
     }
@@ -647,7 +661,6 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
             calendarContainer.setVisibility(View.GONE);
         } else {
             calendarContainer.setVisibility(View.VISIBLE);
-            newsContainer.setVisibility(View.GONE);
             isNewsVisible = false;
 
             calendarSelectedDateText.setText(currentDate.format(DateTimeFormatter.ofPattern("yyyy MM dd (E)")));
@@ -765,7 +778,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         }
 
         builder.setView(dialogView);
-        builder.setPositiveButton("확인", null);
+        builder.setPositiveButton("Confirm", null);
         builder.show();
     }
 
