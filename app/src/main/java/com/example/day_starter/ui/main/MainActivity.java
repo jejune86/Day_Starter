@@ -2,6 +2,8 @@ package com.example.day_starter.ui.main;
 
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.GradientDrawable;
 import android.location.Location;
 import android.os.Bundle;
@@ -25,6 +27,7 @@ import com.example.day_starter.BuildConfig;
 import com.example.day_starter.data.api.client.NewsAPIClient;
 import com.example.day_starter.data.repository.todo.TodoRepository;
 import com.example.day_starter.data.repository.weather.WeatherRepository;
+import com.example.day_starter.model.TarotCard;
 import com.example.day_starter.model.news.NewsResponse;
 import com.example.day_starter.model.todo.Todo;
 import com.example.day_starter.model.weather.Weather;
@@ -57,6 +60,17 @@ import com.example.day_starter.util.ColorManager;
 
 
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Random;
+
+
+
 public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoListener {
 
     private TodoRepository todoRepository;
@@ -78,7 +92,8 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
     private View calendarContainer;
     private View mainContent;
     private View newsContainer;
-
+    private List<TarotCard> tarotCards;
+    private Random random = new Random();
 
     // 콜백 인터페이스 추가
     interface LocationCallback {
@@ -114,6 +129,8 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         initializeCalendarView();
         initializeNewsViews();
         initializeTodoViews();
+        initializeTarotCards();
+        setupTarotButton();
 
         
         
@@ -126,6 +143,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         fabOpenCalender.setOnClickListener(v -> toggleCalendarVisibility());
 
     }
+
 
     private void initializeTodoViews() {
         mainRecyclerTodos = findViewById(R.id.recycler_todos);
@@ -299,7 +317,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         if (precipitationAmount.equals("강수없음")) {
             precipitationAmount = "0mm";
         }
-        else if (precipitationAmount.equals("1.0mm 미만")) {
+        else if (precipitationAmount.equals("1mm 미만")) {
             precipitationAmount = "< 1mm";
         }
         else if (precipitationAmount.equals("50.0mm 이상")) {
@@ -374,10 +392,10 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         
         calendarView.setSelectedDate(CalendarDay.from(currentDate));
 
-        new AlertDialog.Builder(this)
-                .setTitle("새 할 일 추가")
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Add New Task")
                 .setView(dialogView)
-                .setPositiveButton("추가", (dialog, which) -> {
+                .setPositiveButton("Add", (dialogInterface, which) -> {
                     String title = editText.getText().toString().trim();
                     if (!title.isEmpty()) {
                         CalendarDay selectedDate = calendarView.getSelectedDate();
@@ -398,7 +416,15 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
                     }
                 })
                 .setNegativeButton("Cancel", null)
-                .show();
+                .create();
+
+        // 다이얼로그가 보여질 때 버튼 색상 설정
+        dialog.setOnShowListener(dialogInterface -> {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getResources().getColor(R.color.blue));
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getResources().getColor(R.color.blue));
+        });
+        
+        dialog.show();
     }
 
 
@@ -658,6 +684,75 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
             // 위치 정보 다시 가져오기
             checkLocationPermission();
         });
+    }
+
+    private void initializeTarotCards() {
+        tarotCards = new ArrayList<>();
+        try {
+            InputStream is = getAssets().open("tarot/tarot-images.json");
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+            String json = new String(buffer, StandardCharsets.UTF_8);
+            JSONObject jsonObject = new JSONObject(json);
+            JSONArray cardsArray = jsonObject.getJSONArray("cards");
+
+            for (int i = 0; i < cardsArray.length(); i++) {
+                JSONObject cardObject = cardsArray.getJSONObject(i);
+                String name = cardObject.getString("name");
+                String img = cardObject.getString("img");
+                JSONArray lightMeanings = cardObject.getJSONObject("meanings").getJSONArray("light");
+                JSONArray shadowMeanings = cardObject.getJSONObject("meanings").getJSONArray("shadow");
+
+                tarotCards.add(new TarotCard(name, img, lightMeanings, shadowMeanings));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void setupTarotButton() {
+        MaterialButton btnTarot = findViewById(R.id.btn_tarot);
+        btnTarot.setOnClickListener(v -> showTarotReading());
+    }
+
+    private void showTarotReading() {
+        TarotCard selectedCard = getRandomTarotCard();
+        boolean positive = isPositive();
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(selectedCard.getName());
+
+        ImageView imageView = new ImageView(this);
+        try {
+            InputStream is = getAssets().open("tarot/" + selectedCard.getImg());
+            Bitmap bitmap = BitmapFactory.decodeStream(is);
+            imageView.setImageBitmap(bitmap);
+            is.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if (!positive) {
+            imageView.setRotation(180);
+        }
+        builder.setView(imageView);
+
+        String message = positive ? selectedCard.getRandomLightMeaning() : selectedCard.getRandomShadowMeaning();
+        builder.setMessage(message);
+
+        builder.setPositiveButton("확인", null);
+        builder.show();
+    }
+
+    private TarotCard getRandomTarotCard() {
+        int index = random.nextInt(tarotCards.size());
+        return tarotCards.get(index);
+    }
+
+    private boolean isPositive() {
+        return random.nextBoolean();
     }
 
 } 

@@ -10,6 +10,7 @@ android {
 
     buildFeatures {
         buildConfig = true
+
         viewBinding = true
     }
 
@@ -24,7 +25,8 @@ android {
 
         buildConfigField("String", "WEATHER_API_KEY", "\"${gradleLocalProperties(rootDir, providers).getProperty("WEATHER_API_KEY")}\"")
         buildConfigField("String", "NEWS_API_KEY", "\"${gradleLocalProperties(rootDir, providers).getProperty("NEWS_API_KEY")}\"")
-
+        buildConfigField("String", "OAUTH_CLIENT_ID", "\"${gradleLocalProperties(rootDir, providers).getProperty("OAUTH_CLIENT_ID")}\"")
+        manifestPlaceholders["appAuthRedirectScheme"] = "com.example.day_starter"
     }
 
     buildTypes {
@@ -39,6 +41,10 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    packagingOptions {
+        exclude("META-INF/DEPENDENCIES")
     }
 }
 
@@ -64,18 +70,12 @@ dependencies {
 
     implementation("com.google.android.gms:play-services-location:21.2.0")
 
-//    // YouTube API 관련 종속성 수정
-//    implementation("com.google.api-client:google-api-client-android:1.32.1") {
-//        exclude(group = "org.apache.httpcomponents")
-//        exclude(group = "com.google.guava", module = "guava-jdk5")
-//    }
-//    implementation("com.google.apis:google-api-services-youtube:v3-rev222-1.25.0")
-//
-//    // 필수 종속성
-//    implementation("com.google.oauth-client:google-oauth-client:1.32.1")
-//    implementation("com.google.http-client:google-http-client-android:1.32.1")
-//    implementation("com.google.http-client:google-http-client-gson:1.32.1")
-//    implementation("com.google.guava:guava:31.1-android")
+    implementation("androidx.credentials:credentials:1.2.2")
+    implementation("androidx.credentials:credentials-play-services-auth:1.2.2")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
-    
+    implementation("net.openid:appauth:0.11.1")
+
+    implementation("com.github.bumptech.glide:glide:4.12.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.12.0")
 }
