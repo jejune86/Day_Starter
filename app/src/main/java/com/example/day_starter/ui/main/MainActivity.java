@@ -153,7 +153,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         todoAdapter = new TodoAdapter();
         todoAdapter.setTodoListener(this);
         mainRecyclerTodos.setAdapter(todoAdapter);
-        loadTodosByDate(LocalDate.now());
+        loadTodosByDate(LocalDate.now(), todoAdapter);
         updateCalendarDecorations();
     }
 
@@ -212,7 +212,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 getLastKnownLocation(this::fetchWeatherData);
             } else {
-                Toast.makeText(this, "위치 권한이 필요합니다.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Location permission is required.", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -369,18 +369,6 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         findViewById(R.id.loading_layout).setVisibility(View.GONE);
     }
 
-
-    /**
-     * 특정 날짜의 할 일 목록을 로드하여 화면에 표시합니다.
-     * @param date 표시할 날짜
-     */
-    private void loadTodosByDate(LocalDate date) {
-        String dateStr = date.toString(); // YYYY-MM-DD 형식
-        todoRepository.getTodosByDate(dateStr, todos -> 
-            runOnUiThread(() -> todoAdapter.setTodos(todos))
-        );
-    }
-
     /**
      * 새로운 할 일을 추가하는 다이얼로그를 표시합니다.
      * - 제목 입력
@@ -408,7 +396,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
                         Todo newTodo = new Todo(title, todoDate);
                         todoRepository.insertTodo(newTodo, todos -> 
                             runOnUiThread(() -> {
-                                loadTodosByDate(currentDate);
+                                loadTodosByDate(currentDate, todoAdapter);
                                 updateCalendarDecorations();
                             })
                         );
@@ -478,7 +466,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
                         todo.setTitle(title);
                         todoRepository.updateTodo(todo, todos -> 
                             runOnUiThread(() -> {
-                                loadTodosByDate(currentDate);
+                                loadTodosByDate(currentDate, todoAdapter);
                                 if (todoAdapter != null) {
                                     loadTodosByDate(currentDate, todoAdapter);
                                 }
@@ -504,7 +492,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         
         todoRepository.updateTodo(todo, todos -> 
             runOnUiThread(() -> {
-                loadTodosByDate(currentDate);
+                loadTodosByDate(currentDate, todoAdapter);
                 if (todoAdapter != null) {
                     loadTodosByDate(currentDate, todoAdapter);
                 }
@@ -519,7 +507,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         View newsContainer = findViewById(R.id.news_container);
         View mainContent = findViewById(R.id.main_content);
         ImageButton closeButton = findViewById(R.id.btn_close_news);
-        
+
         isNewsVisible = !isNewsVisible;
         
         if (isNewsVisible) {
@@ -539,37 +527,42 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
     }
 
     private void loadNewsHeadlines() {
-        Log.d("NewsAPI", "뉴스 데이 로딩 시작");
+        Log.d("NewsAPI", "News data loading started");
         NewsAPIClient newsAPIClient = new NewsAPIClient();
         newsAPIClient.getNewsAPIService().getTopHeadlines("us", BuildConfig.NEWS_API_KEY)
             .enqueue(new Callback<NewsResponse>() {
                 @Override
                 public void onResponse(Call<NewsResponse> call, Response<NewsResponse> response) {
-                    Log.d("NewsAPI", "응답 받음: " + response.code());
+                    Log.d("NewsAPI", "Response received: " + response.code());
                     if (response.isSuccessful()) {
-                        Log.d("NewsAPI", "응답 성공");
+                        Log.d("NewsAPI", "Response successful");
                         if (response.body() != null) {
-                            Log.d("NewsAPI", "기사 개수: " + response.body().getArticles().size());
-                            runOnUiThread(() -> 
-                                newsAdapter.setArticles(response.body().getArticles())
-                            );
+                            Log.d("NewsAPI", "Article count: " + response.body().getArticles().size());
+                            runOnUiThread(() -> {
+                                newsAdapter.setArticles(response.body().getArticles());
+                                newsLoadingSpinner.setVisibility(View.INVISIBLE);
+                            });
                         } else {
-                            Log.e("NewsAPI", "응답 바디가 null입니다");
+                            Log.e("NewsAPI", "Response body is null");
+                            showErrorToast("Failed to load news data.");
                         }
                     } else {
                         try {
-                            Log.e("NewsAPI", "에러 응답: " + response.errorBody().string());
+                            String errorBody = response.errorBody().string();
+                            Log.e("NewsAPI", "Error response: " + errorBody);
+                            showErrorToast("Server error: " + errorBody);
                         } catch (IOException e) {
-                            Log.e("NewsAPI", "에러 응답을 읽는데 실패했습니다", e);
+                            Log.e("NewsAPI", "Failed to read error response", e);
+                            showErrorToast("Failed to read error response.");
                         }
                     }
                 }
 
                 @Override
                 public void onFailure(Call<NewsResponse> call, Throwable t) {
-                    Log.e("NewsAPI", "API 호출 실패", t);
+                    Log.e("NewsAPI", "API call failed", t);
                     runOnUiThread(() -> {
-                        Toast.makeText(MainActivity.this, "Failed to load news: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                        showErrorToast("News loading failed: " + t.getMessage());
                         newsLoadingSpinner.setVisibility(View.GONE);
                         MaterialButton retryButton = findViewById(R.id.retry_button);
                         retryButton.setVisibility(View.VISIBLE);
@@ -581,6 +574,10 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
                     });
                 }
             });
+    }
+
+    private void showErrorToast(String message) {
+        Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
     }
 
 
