@@ -84,9 +84,9 @@ public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.TodoViewHolder
 
             moreButton.setOnClickListener(v -> {
                 PopupMenu popup = new PopupMenu(v.getContext(), moreButton);
-                popup.getMenu().add(Menu.NONE, 1, 1, "수정하기");
-                popup.getMenu().add(Menu.NONE, 2, 2, "내일하기");
-                popup.getMenu().add(Menu.NONE, 3, 3, "삭제");
+                popup.getMenu().add(Menu.NONE, 1, 1, "Edit");
+                popup.getMenu().add(Menu.NONE, 2, 2, "Do Tomorrow");
+                popup.getMenu().add(Menu.NONE, 3, 3, "Delete");
                 
                 popup.setOnMenuItemClickListener(item -> {
                     switch (item.getItemId()) {

@@ -12,7 +12,7 @@
     </style>
 
     <style name="CustomTextStyle.Body">
-        <item name="android:textSize">16sp</item>
+        <item name="android:textSize">20sp</item>
         <item name="android:textStyle">bold</item>
     </style>
 
@@ -29,5 +29,17 @@
     <style name="CustomFabShape" parent="ShapeAppearance.Material3.SmallComponent">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">12dp</item>
+    </style>
+    <style name="TarotDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:background">#000000</item> <!-- 검은색 배경 -->
+        <item name="android:textColorPrimary">#FFFFFF</item> <!-- 흰색 글씨 -->
+    </style>
+
+    <style name="WeatherTextStyle">
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">#000000</item>
+        <item name="android:textAlignment">center</item>
+        <item name="android:shadowRadius">3</item>
     </style>
 </resources> 

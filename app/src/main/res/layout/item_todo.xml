@@ -14,6 +14,7 @@
         android:layout_height="match_parent"
         android:gravity="center_vertical"
         android:orientation="horizontal"
+        android:background="@color/md_theme_onBackground"
         android:padding="16dp">
 
         <CheckBox
@@ -27,7 +28,8 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
-            style="@style/CustomTextStyle.Body" />
+            style="@style/CustomTextStyle.Body"
+            android:textColor="@color/md_theme_background"/>
 
         <ImageButton
             android:id="@+id/button_more"

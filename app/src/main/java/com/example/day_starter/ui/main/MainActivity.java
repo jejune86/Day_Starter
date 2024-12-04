@@ -1,5 +1,6 @@
 package com.example.day_starter.ui.main;
 
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -118,14 +119,13 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         todoRepository = TodoRepository.getInstance(this);
         currentDate = LocalDate.now();
 
-        date.setText(currentDate.format(DateTimeFormatter.ofPattern("yyyy MM dd")));
+        date.setText(currentDate.format(DateTimeFormatter.ofPattern("yyyy MM dd (E)")));
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         checkLocationPermission();
         
         initializeWeatherViews();
         initializeLocationClient();
-        initializeWeatherData();
         initializeCalendarView();
         initializeNewsViews();
         initializeTodoViews();
@@ -167,11 +167,11 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
 
     private void initializeWeatherViews() {
         mainContent = findViewById(R.id.main_content);
-        tvTemperature = findViewById(R.id.tv_temperature);
-        tvTempRange = findViewById(R.id.tv_temp_range);
-        tvSky = findViewById(R.id.tv_sky);
-        tvPrecipitationType = findViewById(R.id.tv_precipitation_type);
-        tvPrecipitation = findViewById(R.id.tv_precipitation);
+        tvTemperature = findViewById(R.id.tv_temperature_value);
+        tvTempRange = findViewById(R.id.tv_temp_range_value);
+        tvSky = findViewById(R.id.tv_sky_value);
+        tvPrecipitationType = findViewById(R.id.tv_precipitation_type_value);
+        tvPrecipitation = findViewById(R.id.tv_precipitation_value);
         weatherIcon = findViewById(R.id.iv_weather);
     }
     
@@ -264,20 +264,13 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         }
     }
 
-    private void initializeWeatherData() {
-        tvTemperature.setText("Current Temp: Loading...");
-        tvTempRange.setText("Min/Max: --/--");
-        tvSky.setText("Sky Status: Loading...");
-        tvPrecipitationType.setText("Precipitation Type: Loading...");
-        tvPrecipitation.setText("Precipitation: Loading...");
-    }
     
     private void updateWeatherUI() {
         Weather weather = Weather.getInstance();
         
         // 날씨 UI 업데이트
-        tvTemperature.setText(String.format("Current Temp: %.1f°C", weather.getTemperature()));
-        tvTempRange.setText(String.format("Min/Max: %.1f°C/%.1f°C", 
+        tvTemperature.setText(String.format("%.1f°C", weather.getTemperature()));
+        tvTempRange.setText(String.format("%.1f°C/%.1f°C", 
             weather.getMinTemperature(), 
             weather.getMaxTemperature()));
         
@@ -290,7 +283,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         } else {
             skyStatus = "Cloudy";
         }
-        tvSky.setText("Sky Status: " + skyStatus);
+        tvSky.setText(skyStatus);
         
         String precipitationType;
         switch (weather.getPrecipitationType()) {
@@ -312,7 +305,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
             default:
                 precipitationType = "Unknown";
         }
-        tvPrecipitationType.setText("Precipitation Type: " + precipitationType);
+        tvPrecipitationType.setText(precipitationType);
         String precipitationAmount = weather.getPrecipitation();
         if (precipitationAmount.equals("강수없음")) {
             precipitationAmount = "0mm";
@@ -323,7 +316,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         else if (precipitationAmount.equals("50.0mm 이상")) {
             precipitationAmount = "> 50mm";
         }
-        tvPrecipitation.setText("Precipitation: " + precipitationAmount);
+        tvPrecipitation.setText(precipitationAmount);
 
         ImageView weatherIcon = findViewById(R.id.iv_weather);
 
@@ -469,9 +462,9 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         editText.setText(todo.getTitle());
         LocalDate date = LocalDate.parse(todo.getDate());
         new AlertDialog.Builder(this)
-                .setTitle("할 일 수정")
+                .setTitle("Edit Task")
                 .setView(dialogView)
-                .setPositiveButton("수정", (dialog, which) -> {
+                .setPositiveButton("Edit", (dialog, which) -> {
                     String title = editText.getText().toString().trim();
                     if (!title.isEmpty()) {
                         todo.setTitle(title);
@@ -487,7 +480,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
                         );
                     }
                 })
-                .setNegativeButton("취소", null)
+                .setNegativeButton("Cancel", null)
                 .show();
     }
 
@@ -508,7 +501,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
                     loadTodosByDate(currentDate, todoAdapter);
                 }
                 updateCalendarDecorations();
-                Toast.makeText(this, "내일로 이동되었습니다.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Moved to tomorrow.", Toast.LENGTH_SHORT).show();
                 loadTodosByDate(date, todoAdapter);
             })
         );
@@ -635,7 +628,7 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         // 달 이벤트 설정
         calendarView.setOnDateChangedListener((widget, date, selected) -> {
             LocalDate selectedDate = LocalDate.of(date.getYear(), date.getMonth(), date.getDay());
-            calendarSelectedDateText.setText(selectedDate.format(DateTimeFormatter.ofPattern("yyyy MM dd")));
+            calendarSelectedDateText.setText(selectedDate.format(DateTimeFormatter.ofPattern("yyyy MM dd (E)")));
             loadTodosByDate(selectedDate, calendarTodoAdapter);
         });
 
@@ -657,12 +650,12 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
             newsContainer.setVisibility(View.GONE);
             isNewsVisible = false;
 
-            calendarSelectedDateText.setText(currentDate.format(DateTimeFormatter.ofPattern("yyyy MM dd")));
+            calendarSelectedDateText.setText(currentDate.format(DateTimeFormatter.ofPattern("yyyy MM dd (E)")));
             loadTodosByDate(currentDate, calendarTodoAdapter);
             
             calendarView.setOnDateChangedListener((widget, date, selected) -> {
                 LocalDate selectedDate = LocalDate.of(date.getYear(), date.getMonth(), date.getDay());
-                calendarSelectedDateText.setText(selectedDate.format(DateTimeFormatter.ofPattern("yyyy MM dd")));
+                calendarSelectedDateText.setText(selectedDate.format(DateTimeFormatter.ofPattern("yyyy MM dd (E)")));
                 loadTodosByDate(selectedDate, calendarTodoAdapter);
             });
         }
@@ -718,13 +711,46 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
     }
 
     private void showTarotReading() {
-        TarotCard selectedCard = getRandomTarotCard();
-        boolean positive = isPositive();
+        SharedPreferences sharedPreferences = getSharedPreferences("TarotPrefs", MODE_PRIVATE);
+        String savedCardName = sharedPreferences.getString("selectedCardName", null);
+        boolean savedPositive = sharedPreferences.getBoolean("isPositive", true);
+        LocalDate savedDate = LocalDate.parse(sharedPreferences.getString("selectedDate", LocalDate.now().toString()));
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(selectedCard.getName());
+        TarotCard selectedCard;
+        boolean positive;
 
-        ImageView imageView = new ImageView(this);
+        // 오늘 날짜와 저장된 날짜가 다르면 새로운 카드를 선택
+        if (!LocalDate.now().equals(savedDate) || savedCardName == null) {
+            selectedCard = getRandomTarotCard();
+            positive = isPositive();
+
+            // 선택된 카드와 상태를 저장
+            sharedPreferences.edit()
+                .putString("selectedCardName", selectedCard.getName())
+                .putBoolean("isPositive", positive)
+                .putString("selectedDate", LocalDate.now().toString())
+                .apply();
+        } else {
+            // 저장된 카드 정보를 불러옴
+            selectedCard = tarotCards.stream()
+                .filter(card -> card.getName().equals(savedCardName))
+                .findFirst()
+                .orElse(getRandomTarotCard()); // 만약 저장된 카드가 없으면 랜덤으로 선택
+            positive = savedPositive;
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.TarotDialog);
+
+        // 타이틀과 메시지를 가운데 정렬하기 위해 커스텀 레이아웃 사용
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_tarot_reading, null);
+        TextView titleView = dialogView.findViewById(R.id.dialog_title);
+        TextView messageView = dialogView.findViewById(R.id.dialog_message);
+        ImageView imageView = dialogView.findViewById(R.id.dialog_image);
+
+        titleView.setText(selectedCard.getName());
+        String message = positive ? selectedCard.getRandomLightMeaning() : selectedCard.getRandomShadowMeaning();
+        messageView.setText(message);
+
         try {
             InputStream is = getAssets().open("tarot/" + selectedCard.getImg());
             Bitmap bitmap = BitmapFactory.decodeStream(is);
@@ -737,11 +763,8 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         if (!positive) {
             imageView.setRotation(180);
         }
-        builder.setView(imageView);
 
-        String message = positive ? selectedCard.getRandomLightMeaning() : selectedCard.getRandomShadowMeaning();
-        builder.setMessage(message);
-
+        builder.setView(dialogView);
         builder.setPositiveButton("확인", null);
         builder.show();
     }

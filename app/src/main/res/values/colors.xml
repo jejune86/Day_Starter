@@ -16,7 +16,7 @@
     <color name="md_theme_errorContainer">#FFDAD6</color>
     <color name="md_theme_onErrorContainer">#410002</color>
     <color name="md_theme_background">#FFF8F4</color>
-    <color name="md_theme_onBackground">#221A12</color>
+    <color name="md_theme_onBackground">#262626</color>
     <color name="md_theme_surface">#FFF8F4</color>
     <color name="md_theme_onSurface">#221A12</color>
     <color name="md_theme_surfaceVariant">#F7DEC9</color>
