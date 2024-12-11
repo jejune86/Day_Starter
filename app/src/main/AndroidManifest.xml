@@ -30,7 +30,11 @@
                     android:scheme="com.example.day_starter"
                     android:host="oauth2redirect"/>
             </intent-filter>
+            
         </activity>
+        <activity
+        android:name=".ui.main.NewActivity"
+        android:exported="true" />
     </application>
 
 </manifest>

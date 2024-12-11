@@ -1,0 +1,15 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@color/md_theme_primaryContainer">
+    <item
+        android:id="@+id/action_calendar"
+        android:icon="@drawable/menu"
+        android:title="Menu" />
+    <item
+        android:id="@+id/action_add_todo"
+        android:icon="@drawable/apps"
+        android:title="Main" />
+    <item
+        android:id="@+id/action_new_activity"
+        android:icon="@drawable/book"
+        android:title="Tomorrow" />
+</menu> 

@@ -1,5 +1,6 @@
 package com.example.day_starter.ui.main;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -8,6 +9,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.GradientDrawable;
 import android.location.Location;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -16,6 +18,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -40,6 +43,7 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.prolificinteractive.materialcalendarview.CalendarDay;
 import com.prolificinteractive.materialcalendarview.MaterialCalendarView;
 
@@ -85,7 +89,6 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
     private RecyclerView newsRecyclerView;
     private MaterialButton headlinesButton;
     private boolean isNewsVisible = false;
-    private View fullScreenCalendarView;
     private MaterialCalendarView calendarView;
     private RecyclerView calendarRecyclerTodos, mainRecyclerTodos;
     private TextView calendarSelectedDateText, date;
@@ -138,12 +141,32 @@ public class MainActivity extends AppCompatActivity implements TodoAdapter.TodoL
         
 
 
-        FloatingActionButton fabAddTodo = findViewById(R.id.fab_add_todo);
-        fabAddTodo.setOnClickListener(v -> showAddTodoDialog());
+         FloatingActionButton fabAddTodo = findViewById(R.id.fab_add_todo);
+         fabAddTodo.setOnClickListener(v -> showAddTodoDialog());
 
-        FloatingActionButton fabOpenCalender = findViewById(R.id.fab_open_calendar);
-        fabOpenCalender.setOnClickListener(v -> toggleCalendarVisibility());
+         FloatingActionButton fabOpenCalender = findViewById(R.id.fab_open_calendar);
+         fabOpenCalender.setOnClickListener(v -> toggleCalendarVisibility());
 
+        BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
+        bottomNavigationView.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                int itemId = item.getItemId();
+                if (itemId == R.id.action_calendar) {// 달력 화면으로 전환
+                    Intent intent = new Intent(MainActivity.this, NewActivity.class);
+                    startActivity(intent);
+                    return true;
+                } else if (itemId == R.id.action_add_todo) {// 할 일 추가 다이얼로그 표시
+                    showAddTodoDialog();
+                    return true;
+                } else if (itemId == R.id.action_new_activity) {// 새로운 Activity로 전환
+                    Intent intent = new Intent(MainActivity.this, NewActivity.class);
+                    startActivity(intent);
+                    return true;
+                }
+                return false;
+            }
+        });
     }
 
 

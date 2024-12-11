@@ -6,11 +6,13 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.day_starter.R;
 import com.example.day_starter.model.news.NewsResponse.Article;
 
@@ -48,16 +50,22 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
     class NewsViewHolder extends RecyclerView.ViewHolder {
         private final TextView titleText;
         private final TextView descriptionText;
+        private final ImageView imageView;
 
         NewsViewHolder(View itemView) {
             super(itemView);
             titleText = itemView.findViewById(R.id.text_news_title);
             descriptionText = itemView.findViewById(R.id.text_news_description);
+            imageView = itemView.findViewById(R.id.image_news);
         }
 
         void bind(Article article) {
             titleText.setText(article.getTitle());
             descriptionText.setText(article.getDescription());
+
+            Glide.with(itemView.getContext())
+                .load(article.getUrlToImage())
+                .into(imageView);
 
             itemView.setOnClickListener(v -> {
                 Intent intent = new Intent(Intent.ACTION_VIEW);
