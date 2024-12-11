@@ -1,15 +1,15 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     android:background="@color/md_theme_primaryContainer">
     <item
-        android:id="@+id/action_calendar"
+        android:id="@+id/action_menu"
         android:icon="@drawable/menu"
         android:title="Menu" />
     <item
-        android:id="@+id/action_add_todo"
+        android:id="@+id/action_main"
         android:icon="@drawable/apps"
         android:title="Main" />
     <item
-        android:id="@+id/action_new_activity"
+        android:id="@+id/action_tomorrow"
         android:icon="@drawable/book"
         android:title="Tomorrow" />
 </menu> 
