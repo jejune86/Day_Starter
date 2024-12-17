@@ -19,7 +19,6 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 import com.example.day_starter.R;
 import com.example.day_starter.data.repository.weather.WeatherRepository;
-import com.example.day_starter.util.ColorManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -109,13 +108,13 @@ public class MainActivity extends AppCompatActivity {
 
     private class FragmentAdapter extends FragmentStateAdapter {
         private final MainFragment mainFragment;
-        private final TomorrowFragment tomorrowFragment;
+        private final DiaryFragment diaryFragment;
         private final MenuFragment menuFragment;
 
         public FragmentAdapter(FragmentActivity fa, MainFragment mainFragment) {
             super(fa);
             this.mainFragment = mainFragment;
-            this.tomorrowFragment = new TomorrowFragment();
+            this.diaryFragment = new DiaryFragment();
             this.menuFragment = new MenuFragment();
         }
 
@@ -127,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
                 case 1:
                     return mainFragment;
                 case 2:
-                    return tomorrowFragment;
+                    return diaryFragment;
                 default:
                     return mainFragment;
             }

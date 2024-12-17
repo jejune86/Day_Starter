@@ -11,5 +11,5 @@
     <item
         android:id="@+id/action_tomorrow"
         android:icon="@drawable/book"
-        android:title="Tomorrow" />
+        android:title="Diary" />
 </menu> 

@@ -117,4 +117,26 @@ public class TodoRepository {
             callback.onTodosLoaded(todos);
         });
     }
+
+    public void getCompletedTodosByDate(String date, TodoCallback callback) {
+        executorService.execute(() -> {
+            List<TodoEntity> entities = todoDao.getCompletedTodosByDate(date);
+            List<Todo> todos = entities.stream()
+                .map(entity -> {
+                    Todo todo = new Todo(entity.getTitle(), entity.getDate());
+                    todo.setId(entity.getId());
+                    todo.setCompleted(entity.isCompleted());
+                    return todo;
+                })
+                .collect(java.util.stream.Collectors.toList());
+            callback.onTodosLoaded(todos);
+        });
+    }
+
+    public void deleteAllTodos(TodoCallback callback) {
+        executorService.execute(() -> {
+            todoDao.deleteAll();
+            callback.onTodosLoaded(null);
+        });
+    }
 } 

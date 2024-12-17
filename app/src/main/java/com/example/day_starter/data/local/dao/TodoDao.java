@@ -18,6 +18,9 @@ public interface TodoDao {
     @Query("SELECT * FROM todos")
     List<TodoEntity> getAllTodos();
 
+    @Query("SELECT * FROM todos WHERE date = :date and isCompleted = 1 ")
+    List<TodoEntity> getCompletedTodosByDate(String date);
+
     @Insert
     long insert(TodoEntity todo);
 
@@ -26,4 +29,7 @@ public interface TodoDao {
 
     @Delete
     void delete(TodoEntity todo);
+
+    @Query("DELETE FROM todos")
+    void deleteAll();
 } 

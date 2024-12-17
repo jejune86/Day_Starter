@@ -107,6 +107,7 @@ public class MainFragment extends Fragment implements TodoAdapter.TodoListener {
     private List<TarotCard> tarotCards;
     private Random random = new Random();
     private ProgressBar newsLoadingSpinner;
+    private FloatingActionButton fabAddTodo, fabOpenCalender;
 
     // 콜백 인터페이스 추가
     interface LocationCallback {
@@ -140,10 +141,10 @@ public class MainFragment extends Fragment implements TodoAdapter.TodoListener {
         initializeTarotCards();
         setupTarotButton();
 
-        FloatingActionButton fabAddTodo = view.findViewById(R.id.fab_add_todo);
+        fabAddTodo = view.findViewById(R.id.fab_add_todo);
         fabAddTodo.setOnClickListener(v -> showAddTodoDialog());
 
-        FloatingActionButton fabOpenCalender = view.findViewById(R.id.fab_open_calendar);
+        fabOpenCalender = view.findViewById(R.id.fab_open_calendar);
         fabOpenCalender.setOnClickListener(v -> toggleCalendarVisibility());
 
         return view;
@@ -296,7 +297,7 @@ public class MainFragment extends Fragment implements TodoAdapter.TodoListener {
      * - 날짜 선택 가능
      */
     private void showAddTodoDialog() {
-        View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_todo_with_date, null);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_todo, null);
         EditText editText = dialogView.findViewById(R.id.todo_title_input);
         MaterialCalendarView calendarView = dialogView.findViewById(R.id.calendarView);
         
@@ -566,7 +567,7 @@ public class MainFragment extends Fragment implements TodoAdapter.TodoListener {
 
     }
 
-    private void loadTodosByDate(LocalDate date, TodoAdapter adapter) {
+    public void loadTodosByDate(LocalDate date, TodoAdapter adapter) {
         String dateStr = date.toString();
         todoRepository.getTodosByDate(dateStr, todos ->
             getActivity().runOnUiThread(() -> adapter.setTodos(todos))
@@ -693,4 +694,7 @@ public class MainFragment extends Fragment implements TodoAdapter.TodoListener {
         return random.nextBoolean();
     }
 
+    public TodoAdapter getTodoAdapter() {
+        return todoAdapter;
+    }
 }

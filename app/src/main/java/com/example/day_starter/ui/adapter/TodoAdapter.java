@@ -22,6 +22,7 @@ import android.view.Menu;
 public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.TodoViewHolder> {
     private List<Todo> todos = new ArrayList<>();
     private TodoListener listener;
+    
 
     public interface TodoListener {
         void onTodoCheckedChanged(Todo todo, boolean isChecked);

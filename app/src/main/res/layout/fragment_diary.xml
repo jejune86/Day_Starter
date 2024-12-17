@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:id="@+id/fragment_diary">
+    <TextView
+        android:id="@+id/diary_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Diary"
+        style="@style/CustomTextStyle.Title"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="25dp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_diary"
+        android:layout_below="@id/diary_title"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_add_diary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="16dp"
+        android:src="@android:drawable/ic_input_add" />
+</RelativeLayout>
