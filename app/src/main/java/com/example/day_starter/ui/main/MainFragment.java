@@ -250,7 +250,7 @@ public class MainFragment extends Fragment implements TodoAdapter.TodoListener {
 
         ImageView weatherIcon = view.findViewById(R.id.iv_weather);
 
-        // 강수 형태가 ��을 때는 하늘 상태에 따라 아이콘 설정
+        // 강수 형태가 없을 때는 하늘 상태에 따라 아이콘 설정
         if (weather.getPrecipitationType() == 0) {
             if (weather.getSky() <= 5) {
                 weatherIcon.setImageResource(R.drawable.ic_sunny);

@@ -23,10 +23,18 @@
             android:textSize="16sp"
             android:textStyle="bold"
             android:textColor="@color/md_theme_background"/>
+
         <ImageView
             android:id="@+id/image_news"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"/>
 
         <TextView
             android:id="@+id/text_news_description"
@@ -37,7 +45,6 @@
             android:ellipsize="end"
             android:textStyle="bold"
             android:textColor="@color/md_theme_background"/>
-
 
     </LinearLayout>
 
