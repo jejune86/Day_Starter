@@ -136,11 +136,69 @@ public class DiaryFragment extends Fragment implements DiaryAdapter.DiaryListene
 
     @Override
     public void onDiaryEdit(DiaryEntity diary) {
-        // 다이어리 수정 로직을 여기에 추가
+        // 수정 다이얼로그를 띄우는 메서드 호출
+        showEditDiaryDialog(diary);
+    }
+
+    private void showEditDiaryDialog(DiaryEntity diary) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_diary, null);
+        builder.setView(dialogView);
+
+        EditText editTitle = dialogView.findViewById(R.id.edit_diary_title);
+        EditText editContent = dialogView.findViewById(R.id.edit_diary_content);
+        EditText editDate = dialogView.findViewById(R.id.edit_diary_date);
+        Button buttonSave = dialogView.findViewById(R.id.button_save_diary);
+        Button buttonCancel = dialogView.findViewById(R.id.button_cancel_diary);
+
+        // 기존 다이어리 정보로 EditText 초기화
+        editTitle.setText(diary.getTitle());
+        editContent.setText(diary.getContent());
+        editDate.setText(diary.getDate());
+
+        AlertDialog dialog = builder.create();
+
+        buttonSave.setOnClickListener(v -> {
+            String title = editTitle.getText().toString();
+            String content = editContent.getText().toString();
+            String date = editDate.getText().toString();
+
+            if (!title.isEmpty() && !content.isEmpty()) {
+                DiaryEntity updatedDiary = new DiaryEntity(date, title, content);
+                updatedDiary.setId(diary.getId());
+                diaryRepository.updateDiary(updatedDiary, new DiaryRepository.DiaryCallback() {
+                    @Override
+                    public void onDiaryInserted(DiaryEntity diary) {
+                        loadDiaries(); // RecyclerView 업데이트
+                    }
+
+                    @Override
+                    public void onDiariesLoaded(List<DiaryEntity> diaries) {
+                        loadDiaries();
+                    }
+                });
+                dialog.dismiss();
+            }
+        });
+
+        buttonCancel.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
+
     }
 
     @Override
     public void onDiaryDelete(DiaryEntity diary) {
-        // 다이어리 삭제 로직을 여기에 추가
+        diaryRepository.deleteDiary(diary, new DiaryRepository.DiaryCallback() {
+            @Override
+            public void onDiaryInserted(DiaryEntity diary) {
+                // 필요 없음
+            }
+
+            @Override
+            public void onDiariesLoaded(List<DiaryEntity> diaries) {
+                loadDiaries(); // 다이어리 목록을 다시 로드하여 UI 업데이트
+            }
+        });
     }
 } 

@@ -635,19 +635,16 @@ public class MainFragment extends Fragment implements TodoAdapter.TodoListener {
         TarotCard selectedCard;
         boolean positive;
 
-        // 오늘 ���짜와 저장된 날짜가 다르면 새로운 카드를 선택
         if (!LocalDate.now().equals(savedDate) || savedCardName == null) {
             selectedCard = getRandomTarotCard();
             positive = isPositive();
 
-            // 선택된 카드��� 상태를 저장
             sharedPreferences.edit()
                 .putString("selectedCardName", selectedCard.getName())
                 .putBoolean("isPositive", positive)
                 .putString("selectedDate", LocalDate.now().toString())
                 .apply();
         } else {
-            // 저장된 카드 정보를 불러옴
             selectedCard = tarotCards.stream()
                 .filter(card -> card.getName().equals(savedCardName))
                 .findFirst()
@@ -657,7 +654,6 @@ public class MainFragment extends Fragment implements TodoAdapter.TodoListener {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), R.style.TarotDialog);
 
-        // 타이틀과 메시지를 가운데 정렬하기 위해 커스텀 레이아웃 사용
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_tarot_reading, null);
         TextView titleView = dialogView.findViewById(R.id.dialog_title);
         TextView messageView = dialogView.findViewById(R.id.dialog_message);

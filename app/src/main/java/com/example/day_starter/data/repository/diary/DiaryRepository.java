@@ -58,6 +58,20 @@ public class DiaryRepository {
         });
     }
 
+    public void deleteDiary(DiaryEntity diary, DiaryCallback callback) {
+        executorService.execute(() -> {
+            diaryDao.delete(diary);
+            callback.onDiariesLoaded(null);
+        });
+    }
+
+    public void updateDiary(DiaryEntity diary, DiaryCallback callback) {
+        executorService.execute(() -> {
+            diaryDao.update(diary);
+            callback.onDiaryInserted(null);
+        });
+    }
+
     public interface DiaryCallback {
         void onDiaryInserted(DiaryEntity diary);
         void onDiariesLoaded(List<DiaryEntity> diaries);

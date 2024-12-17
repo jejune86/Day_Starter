@@ -30,11 +30,8 @@ public class MenuFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_menu, container, false);
 
-        // 예시로 텍스트뷰 설정
+
         TextView textView = view.findViewById(R.id.menu_text);
-
-
-        // 리셋 버튼 추가
         Button buttonTodoReset = view.findViewById(R.id.button_todo_reset);
         Button buttonDiaryReset = view.findViewById(R.id.button_diary_reset);
         buttonTodoReset.setOnClickListener(v -> showTodoResetConfirmationDialog());
