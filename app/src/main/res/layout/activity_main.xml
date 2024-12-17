@@ -6,11 +6,11 @@
     android:layout_height="match_parent"
     android:background="@color/md_theme_onPrimary">
 
-     <fragment
-        android:id="@+id/fragment_container"
-        android:name="com.example.day_starter.ui.main.MainFragment"
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/view_pager"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:layout_above="@id/bottom_navigation" />
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation"
